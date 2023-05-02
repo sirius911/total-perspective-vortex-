@@ -94,12 +94,12 @@ def analyse(subject:int, n_experience:int):
     # Perform spectral analysis on sensor data.
     raw.compute_psd(picks='all').plot()
 
-    #ICA
-    ica = mne.preprocessing.ICA(n_components=62, random_state=0)
-    raw_copy = raw.copy().filter(8,30)
-    raw_copy.drop_channels(['T9', 'T10'])
-    ica.fit(raw_copy)
-    ica.plot_components(outlines='head', inst=raw, show_names=True)
+    # #ICA
+    # ica = mne.preprocessing.ICA(n_components=62, random_state=0)
+    # raw_copy = raw.copy().filter(8,30)
+    # raw_copy.drop_channels(['T9', 'T10'])
+    # ica.fit(raw_copy)
+    # ica.plot_components(outlines='head', inst=raw, show_names=False)
 
     # Select channels
     channels = raw.info["ch_names"]
@@ -109,6 +109,13 @@ def analyse(subject:int, n_experience:int):
     bad_channels = [x for x in channels if x not in good_channels]
     # print(bad_channels)
     raw.drop_channels(bad_channels)
+
+    #ICA
+    ica = mne.preprocessing.ICA(n_components=len(good_channels), random_state=0)
+    raw_copy = raw.copy().filter(8,30)
+    # raw_copy.drop_channels(['T9', 'T10'])
+    ica.fit(raw_copy)
+    ica.plot_components(outlines='head', inst=raw, show_names=False)
 
     ###... in progress
     print(f"Analyse of patient # {subject} ... done")
