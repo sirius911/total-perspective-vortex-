@@ -9,40 +9,7 @@ import matplotlib.pyplot as plt
 import tkinter as tk
 from tkinter import ttk
 
-path = os.getenv('HOME') + '/goinfre'
 
-experiments = [
-    {
-        "description": "open and close left or right fist",
-        "runs": [3, 7, 11],
-        "mapping": {0: "rest", 1: "left fist", 2: "right fist"},
-    },
-    {
-        "description": "imagine opening and closing left or right fist",
-        "runs": [4, 8, 12],
-        "mapping": {0: "rest", 1: "imagine left fist", 2: "imagine right fist"},
-    },
-    {
-        "description": "open and close both fists or both feet",
-        "runs": [5, 9, 13],
-        "mapping": {0: "rest", 1: "both fists", 2: "both feets"},
-    },
-    {
-        "description": "imagine opening and closing both fists or both feet",
-        "runs": [6, 10, 14],
-        "mapping": {0: "rest", 1: "imagine both fists", 2: "imagine both feets"},
-    },
-    {
-        "description": "movement (real or imagine) of fists",
-        "runs": [3, 7, 11, 4, 8, 12],
-        "mapping": {0: "rest", 1: "left fist", 2: "right fist"},
-    },
-    {
-        "description": "movement (real or imagine) of both fists or both feet",
-        "runs": [5, 9, 13, 6, 10, 14],
-        "mapping": {0: "rest", 1: "both fists", 2: "both feets"},
-    },
-]
 
 def analyse(subject:int, n_experience:int):
 
@@ -123,8 +90,9 @@ def analyse(subject:int, n_experience:int):
 def change_button(event):
     event['state'] = tk.NORMAL
 
-def launch_process(patient, experience):
-    analyse(patient, experience)
+def launch_process(patient, experience, type_process):
+    if type_process == 'ANALYSE':
+        analyse(patient, experience)
 
 def main_window():
     # Create Main window
@@ -136,7 +104,7 @@ def main_window():
     patient_frame.pack(padx=10, pady=10)
 
     patient_var = tk.StringVar()
-    patient_var.set("Choose a Patient")
+    patient_var.set("All patient")
 
     patients = [str(i) for i in range(1,110)]
 
@@ -156,11 +124,13 @@ def main_window():
     tk.Radiobutton(experience_frame, text="Movement (Real or Imagine) of fists", variable=experience_var, value=4).pack(anchor="w")
     tk.Radiobutton(experience_frame, text="Movement (Real or Imagine) of Fists or Feets", variable=experience_var, value=5).pack(anchor="w")
 
-    # Button to start the process
-    launch_button = tk.Button(window, text="Launch the analysis", state="disabled", command=lambda:launch_process(patient_var.get(), experience_var.get()))
-    launch_button.pack(padx=10, pady=10)
+    # Buttons to start the process
+    analys_button = tk.Button(window, text="Launch the analysis", state="disabled", command=lambda:launch_process(patient_var.get(), experience_var.get(), type_process='ANALYSE'))
+    analys_button.pack(padx=10, pady=10)
+    train_button = tk.Button(window, text="Train", state="active", command=lambda:launch_process(patient_var.get(), experience_var.get(), type_process='TRAIN'))
+    train_button.pack(padx=0, pady=0)
 
-    patient_combo.bind("<<ComboboxSelected>>", lambda event:change_button(launch_button))
+    patient_combo.bind("<<ComboboxSelected>>", lambda event:change_button(analys_button))
 
     # Launching the event loop of the window
     window.mainloop()
