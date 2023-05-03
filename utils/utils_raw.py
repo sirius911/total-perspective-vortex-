@@ -1,6 +1,7 @@
 import os
 import mne
 from .experiments import experiments
+from .commun import colors
 
 path = os.getenv('HOME') + '/goinfre'
 
@@ -16,7 +17,7 @@ def drop_bad_channels(raw, bad_channels=None):
                         "CP5", "CP3", "CP1", "CPz", "CP2", "CP4", "CP6"]
         bad_channels = [x for x in channels if x not in good_channels]
     raw.drop_channels(bad_channels)
-    print(f"Drop {len(bad_channels)} Bad channel(s).")
+    print(f"{colors.red}Drop {len(bad_channels)} Bad channel(s).{colors.reset}")
     return raw
 
 def get_raw(subject, n_experience, runs):
