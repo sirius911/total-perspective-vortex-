@@ -1,4 +1,3 @@
-import os
 import numpy as numpy
 import mne
 
@@ -9,6 +8,8 @@ import matplotlib.pyplot as plt
 import tkinter as tk
 from tkinter import ttk
 
+from utils.experiments import experiments
+from utils.utils_raw import get_raw
 
 
 def analyse(subject:int, n_experience:int):
@@ -16,79 +17,51 @@ def analyse(subject:int, n_experience:int):
     print("Process started with parameters : subject=", subject, ", experience=", n_experience)
     subject = int((subject))
     n_experience = int(n_experience)
-    # n_experience = 0
     runs = experiments[n_experience]['runs']
 
-    #load list of file for subject and #experience(runs)
-    files_name = mne.datasets.eegbci.load_data(subject=subject, runs=runs ,path=path)
-    # print(files_name)
-
-    #concatenate all the file in one raw
-    raw = mne.io.concatenate_raws([mne.io.read_raw_edf(f, preload=True, verbose=False) for f in files_name])
-    print(raw.info)
-    sfreq = raw.info['sfreq']
-
-    # recup events and events_id
-    events, event_id = mne.events_from_annotations(raw, event_id=dict(T0=0, T1=1, T2=2))
-    # print(type(event_id))
-    # print(events.shape)
-
-
-    # set Descriptions of events in raw data
-    annotations = mne.annotations_from_events(events=events, sfreq=sfreq, event_desc=experiments[n_experience]['mapping'], verbose=True)
-    print(annotations)
-    raw = raw.set_annotations(annotations=annotations)
-
-    # Standardize channel positions and names.
-    mne.datasets.eegbci.standardize(raw=raw)
-
-    montage = mne.channels.make_standard_montage("biosemi64")
-    raw.set_montage(montage, on_missing='ignore')
-
+    raw, events = get_raw(subject = subject, n_experience=n_experience, runs=runs)
 
     # draw the first data
     title = f"Patient #{subject} - {experiments[n_experience]['description'].title()} - BEFORE TRAITEMENT"
+    
     raw.plot(scalings=dict(eeg=250e-6), title=title)
     plt.show()
+    bad_channels = raw.info['bads']
 
     # drawing events
     event_dict = {value: key for key, value in experiments[n_experience]['mapping'].items()}
-    fig = mne.viz.plot_events(events, sfreq=sfreq, first_samp=raw.first_samp, event_id=event_dict)
+    fig = mne.viz.plot_events(events, sfreq = raw.info['sfreq'], first_samp=raw.first_samp, event_id=event_dict)
     fig.subplots_adjust(right= 0.8)
-
-    
 
     # Perform spectral analysis on sensor data.
     raw.compute_psd(picks='all').plot()
 
-    # #ICA
-    # ica = mne.preprocessing.ICA(n_components=62, random_state=0)
-    # raw_copy = raw.copy().filter(8,30)
-    # raw_copy.drop_channels(['T9', 'T10'])
-    # ica.fit(raw_copy)
-    # ica.plot_components(outlines='head', inst=raw, show_names=False)
-
     # Select channels
-    channels = raw.info["ch_names"]
-    good_channels = ["FC5", "FC3", "FC1", "FCz", "FC2", "FC4", "FC6",
-                    "C5",  "C3",  "C1",  "Cz",  "C2",  "C4",  "C6",
-                    "CP5", "CP3", "CP1", "CPz", "CP2", "CP4", "CP6"]
-    bad_channels = [x for x in channels if x not in good_channels]
-    # print(bad_channels)
+    # good_channels = ["FC5", "FC3", "FC1", "FCz", "FC2", "FC4", "FC6",
+    #                 "C5",  "C3",  "C1",  "Cz",  "C2",  "C4",  "C6",
+    #                 "CP5", "CP3", "CP1", "CPz", "CP2", "CP4", "CP6"]
+    # bad_channels = [x for x in channels if x not in good_channels]
+
     raw.drop_channels(bad_channels)
+    channels = raw.info["ch_names"]
+    print(f"len (good_channels) = {len(channels)}")
 
     #ICA
-    ica = mne.preprocessing.ICA(n_components=len(good_channels), random_state=0)
+    ica = mne.preprocessing.ICA(n_components=len(channels) - 2, random_state=0)
     raw_copy = raw.copy().filter(8,30)
-    # raw_copy.drop_channels(['T9', 'T10'])
+    
+    # The following electrodes have overlapping positions, which causes problems during visualization:
+    raw_copy.drop_channels(['T9', 'T10'], on_missing='ignore')
     ica.fit(raw_copy)
-    ica.plot_components(outlines='head', inst=raw, show_names=False)
+    ica.plot_components(outlines='head', inst=raw_copy, show_names=False)
 
-    ###... in progress
     print(f"Analyse of patient # {subject} ... done")
 
-def change_button(event):
-    event['state'] = tk.NORMAL
+def change_button(event, patient):
+    if patient == 'All':
+        event['state'] = tk.DISABLED
+    else:
+        event['state'] = tk.NORMAL
 
 def launch_process(patient, experience, type_process):
     if type_process == 'ANALYSE':
@@ -104,9 +77,12 @@ def main_window():
     patient_frame.pack(padx=10, pady=10)
 
     patient_var = tk.StringVar()
-    patient_var.set("All patient")
-
-    patients = [str(i) for i in range(1,110)]
+    patient_var.set("Set Patient")
+    patients = []
+    patients.append("All")
+    for i in range(1, 110):
+        patients.append(i)
+    # patients = [str(i) for i in range(1,110)]
 
     patient_combo = ttk.Combobox(patient_frame, textvariable=patient_var, values=patients, state="readonly")
     patient_combo.pack(padx=10, pady=10)
@@ -130,7 +106,7 @@ def main_window():
     train_button = tk.Button(window, text="Train", state="active", command=lambda:launch_process(patient_var.get(), experience_var.get(), type_process='TRAIN'))
     train_button.pack(padx=0, pady=0)
 
-    patient_combo.bind("<<ComboboxSelected>>", lambda event:change_button(analys_button))
+    patient_combo.bind("<<ComboboxSelected>>", lambda event:change_button(analys_button, patient_var.get()))
 
     # Launching the event loop of the window
     window.mainloop()
