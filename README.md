@@ -48,7 +48,7 @@ Dans les versions de ces fichiers au format BCI2000, qui peuvent être obtenues 
 
 ## Montage
 Les EEG ont été enregistrés à partir de 64 électrodes selon le système international 10-10 (à l'exclusion des électrodes Nz, F9, F10, FT9, FT10, A1, A2, TP9, TP10, P9 et P10), comme le montre cette figure PDF. 
-
+[64_channel_sharbrough.pdf](https://github.com/sirius911/total-perspective-vortex-/files/11384192/64_channel_sharbrough.pdf)
 Les numéros figurant sous le nom de chaque électrode indiquent l'ordre dans lequel elles apparaissent dans les enregistrements ; il convient de noter que les signaux dans les enregistrements sont numérotés de 0 à 63, tandis que les numéros dans la figure vont de 1 à 64.
 
 ## Remerciements
