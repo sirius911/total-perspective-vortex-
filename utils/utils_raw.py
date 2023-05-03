@@ -16,7 +16,7 @@ def drop_bad_channels(raw, bad_channels=None):
                         "CP5", "CP3", "CP1", "CPz", "CP2", "CP4", "CP6"]
         bad_channels = [x for x in channels if x not in good_channels]
     raw.drop_channels(bad_channels)
-    print(f"Drop {len(drop_channels)} Bad channel(s).")
+    print(f"Drop {len(bad_channels)} Bad channel(s).")
     return raw
 
 def get_raw(subject, n_experience, runs):

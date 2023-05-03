@@ -12,7 +12,7 @@ from utils.experiments import experiments
 from utils.utils_raw import get_raw, drop_bad_channels
 
 
-def analyse(subject:int, n_experience:int):
+def analyse(subject:int, n_experience:int, drop_option):
 
     print("Process started with parameters : subject=", subject, ", experience=", n_experience)
     subject = int((subject))
@@ -26,9 +26,9 @@ def analyse(subject:int, n_experience:int):
     
     raw.plot(scalings=dict(eeg=250e-6), title=title)
     plt.show()
-    bad_channels = raw.info['bads']
-    print(f"Bad_channels = {bad_channels}")
-    raw = drop_bad_channels(raw, bad_channels)
+    if drop_option:
+        bad_channels = raw.info['bads']
+        raw = drop_bad_channels(raw, bad_channels)
 
 
     # drawing events
@@ -40,7 +40,6 @@ def analyse(subject:int, n_experience:int):
     raw.compute_psd(picks='all').plot()
 
     channels = raw.info["ch_names"]
-    print(f"len (good_channels) = {len(channels)}")
 
     #ICA
     ica = mne.preprocessing.ICA(n_components=len(channels) - 2, random_state=0)
@@ -59,9 +58,9 @@ def change_button(event, patient):
     else:
         event['state'] = tk.NORMAL
 
-def launch_process(patient, experience, type_process):
+def launch_process(patient, experience, type_process, drop_option=True):
     if type_process == 'ANALYSE':
-        analyse(patient, experience)
+        analyse(patient, experience, drop_option)
 
 def main_window():
     # Create Main window
@@ -76,9 +75,7 @@ def main_window():
     patient_var.set("Set Patient")
     patients = []
     patients.append("All")
-    for i in range(1, 110):
-        patients.append(i)
-    # patients = [str(i) for i in range(1,110)]
+    patients.extend(range(1, 110))
 
     patient_combo = ttk.Combobox(patient_frame, textvariable=patient_var, values=patients, state="readonly")
     patient_combo.pack(padx=10, pady=10)
@@ -96,8 +93,13 @@ def main_window():
     tk.Radiobutton(experience_frame, text="Movement (Real or Imagine) of fists", variable=experience_var, value=4).pack(anchor="w")
     tk.Radiobutton(experience_frame, text="Movement (Real or Imagine) of Fists or Feets", variable=experience_var, value=5).pack(anchor="w")
 
+    # Checkbox for Drop bad channels option
+    drop_option =  tk.BooleanVar(value=False) #tk.IntVar(value=0)
+    drop_checkbutton = tk.Checkbutton(window, text="Drop Bad Channels", variable=drop_option)
+    drop_checkbutton.pack(padx=10, pady=10)
+
     # Buttons to start the process
-    analys_button = tk.Button(window, text="Launch the analysis", state="disabled", command=lambda:launch_process(patient_var.get(), experience_var.get(), type_process='ANALYSE'))
+    analys_button = tk.Button(window, text="Launch the analysis", state="disabled", command=lambda:launch_process(patient_var.get(), experience_var.get(), type_process='ANALYSE',drop_option=drop_option.get()))
     analys_button.pack(padx=10, pady=10)
     train_button = tk.Button(window, text="Train", state="active", command=lambda:launch_process(patient_var.get(), experience_var.get(), type_process='TRAIN'))
     train_button.pack(padx=0, pady=0)
