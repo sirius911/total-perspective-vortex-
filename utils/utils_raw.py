@@ -4,9 +4,30 @@ from .experiments import experiments
 
 path = os.getenv('HOME') + '/goinfre'
 
+def drop_bad_channels(raw, bad_channels=None):
+    """
+        functoin deleting bad_channels to the raw
+        if bad_channels == None it delete a predefined hard list 
+    """
+    channels = raw.info["ch_names"]
+    if len(bad_channels) == 0:
+        good_channels = ["FC5", "FC3", "FC1", "FCz", "FC2", "FC4", "FC6",
+                        "C5",  "C3",  "C1",  "Cz",  "C2",  "C4",  "C6",
+                        "CP5", "CP3", "CP1", "CPz", "CP2", "CP4", "CP6"]
+        bad_channels = [x for x in channels if x not in good_channels]
+    raw.drop_channels(bad_channels)
+    print(f"Drop {len(drop_channels)} Bad channel(s).")
+    return raw
+
 def get_raw(subject, n_experience, runs):
     """
         function loading data from physionet
+        args:
+            subject: number of patient
+            n_experience: number of experience
+            runs: list of run
+
+        return mne.raw and events
 
     """
     #load list of file for subject and #experience(runs)

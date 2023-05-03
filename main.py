@@ -9,7 +9,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from utils.experiments import experiments
-from utils.utils_raw import get_raw
+from utils.utils_raw import get_raw, drop_bad_channels
 
 
 def analyse(subject:int, n_experience:int):
@@ -27,6 +27,9 @@ def analyse(subject:int, n_experience:int):
     raw.plot(scalings=dict(eeg=250e-6), title=title)
     plt.show()
     bad_channels = raw.info['bads']
+    print(f"Bad_channels = {bad_channels}")
+    raw = drop_bad_channels(raw, bad_channels)
+
 
     # drawing events
     event_dict = {value: key for key, value in experiments[n_experience]['mapping'].items()}
@@ -36,20 +39,13 @@ def analyse(subject:int, n_experience:int):
     # Perform spectral analysis on sensor data.
     raw.compute_psd(picks='all').plot()
 
-    # Select channels
-    # good_channels = ["FC5", "FC3", "FC1", "FCz", "FC2", "FC4", "FC6",
-    #                 "C5",  "C3",  "C1",  "Cz",  "C2",  "C4",  "C6",
-    #                 "CP5", "CP3", "CP1", "CPz", "CP2", "CP4", "CP6"]
-    # bad_channels = [x for x in channels if x not in good_channels]
-
-    raw.drop_channels(bad_channels)
     channels = raw.info["ch_names"]
     print(f"len (good_channels) = {len(channels)}")
 
     #ICA
     ica = mne.preprocessing.ICA(n_components=len(channels) - 2, random_state=0)
     raw_copy = raw.copy().filter(8,30)
-    
+
     # The following electrodes have overlapping positions, which causes problems during visualization:
     raw_copy.drop_channels(['T9', 'T10'], on_missing='ignore')
     ica.fit(raw_copy)
