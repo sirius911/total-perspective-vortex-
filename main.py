@@ -12,12 +12,17 @@ from tkinter import ttk
 
 from utils.experiments import experiments
 from utils.utils_raw import get_raw, drop_bad_channels
+from utils.commun import colors
+from utils.graph import plot_learning_curve
 
 from sklearn.pipeline import Pipeline
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.model_selection import learning_curve, cross_val_score, train_test_split
+from sklearn.model_selection import cross_val_score, train_test_split, ShuffleSplit
+from sklearn.metrics import accuracy_score
 
-def train(subject:int, n_experience:int, drop_option):
+model = None
+
+def train(subject:int, n_experience:int, drop_option, clf=None):
     print("Process started with parameters : subject=", subject, ", experience=", n_experience)
     tmin, tmax = -1.0, 4.0
     subject = int((subject))
@@ -29,7 +34,7 @@ def train(subject:int, n_experience:int, drop_option):
         raw = drop_bad_channels(raw, bad_channels)
 
     # Apply band-pass filter
-    raw.notch_filter(60, method="iir")
+    raw.notch_filter(60, picks='eeg', method="iir")
     raw.filter(7.0, 32.0, fir_design="firwin", skip_by_annotation="edge")
 
     # Read epochs
@@ -41,27 +46,54 @@ def train(subject:int, n_experience:int, drop_option):
     epochs_train = epochs.copy().crop(tmin=1.0, tmax=4.0).get_data()
     print(epochs_train.shape)
 
-    # Assemble a classifier
-    csp = CSP(6)
-    lda = LinearDiscriminantAnalysis()
-    clf = Pipeline([("CSP", csp), ("LDA", lda)])
+    # Assemble a classifier #1
+    # csp = CSP(6)
+    # lda = LinearDiscriminantAnalysis()
+    # clf = Pipeline([("CSP", csp), ("LDA", lda)])
 
-    # fit our pipeline to the experiment
-    X_train, X_test, y_train, y_test = train_test_split(epochs_train, labels, random_state=0)
-    clf.fit(X_train, y_train)
-    score = clf.score(X_test, y_test)
-    train_sizes, train_scores, test_scores = learning_curve(clf, epochs_train, labels, cv=5, n_jobs=-1, train_sizes=np.linspace(0.1, 1.0, 10), scoring='accuracy')
-    train_scores_mean = np.mean(train_scores, axis=1)
-    test_scores_mean = np.mean(test_scores, axis=1)
+   
+    if clf is None:
+         # Assemble a classifier #2
+        csp = CSP(2)
+        lda = LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto')
+        cv = ShuffleSplit(10, test_size=0.2, random_state=0)
+        clf = Pipeline([("CSP", csp), ("LDA", lda)])
 
-    plt.plot(train_sizes, train_scores_mean, label='Training score')
-    plt.plot(train_sizes, test_scores_mean, label='Cross-validation score')
-    plt.xlabel('Number of Events')
-    plt.ylabel('Accuracy score')
-    plt.legend()
-    titre = (f"Patient #{subject} [{experiments[n_experience]['description']}] Score ={score:0.02f}")
-    plt.title(titre, fontsize=9)
+    # fit our pipeline to the experiment #1
+    _, X_test, _, y_test = train_test_split(epochs_train, labels, random_state=0)
+    
+
+    scores_ldashrinkage = cross_val_score(clf, epochs_train, labels, cv=cv, n_jobs=-1)
+
+
+    mean_scores_ldashrinkage, std_scores_ldashrinkage = np.mean(scores_ldashrinkage), np.std(scores_ldashrinkage)
+    class_balance = np.mean(labels == labels[0])
+    class_balance = max(class_balance, 1. - class_balance)
+    print("LDA SHRINKED Classification accuracy: %f / Chance level: %f" % (np.mean(scores_ldashrinkage), class_balance))
+    print(f"Mean Score Model {mean_scores_ldashrinkage}")
+    print(f"Std Score Model {std_scores_ldashrinkage}")
+
+    clf.fit(epochs_train, labels)
+    # score = clf.score(X_test, y_test)
+
+    title = "Learning Curves "
+    plot_learning_curve(clf, title, epochs_train, labels,cv=cv, n_jobs=-1)
+
+    msg = (f"Patient #{colors.blue}{subject}{colors.reset} [{colors.green}{experiments[n_experience]['description']}{colors.reset}] Score ={colors.green}{mean_scores_ldashrinkage:0.02f}{colors.reset}")
+    print(msg)
+    print(f"Mean Score Model {mean_scores_ldashrinkage}")
     plt.show()
+
+    #predict
+    predictions = clf.predict(X_test)
+    print(f'epoch nb: [prediction] [truth] equal?')
+    for i, prediction in enumerate(predictions):
+        print(f'epoch {i:02d}: [{prediction}] [{y_test[i]}] {prediction == y_test[i]}')
+        # time.sleep(0.05)
+
+    score_subject = accuracy_score(predictions, y_test)
+    print(f'mean accuracy for all experiments:{score_subject}')
+    return clf,mean_scores_ldashrinkage
 
 def analyse(subject:int, n_experience:int, drop_option):
 
@@ -110,14 +142,16 @@ def change_button(analys_button, train_button, patient):
         analys_button['state'] = tk.NORMAL
     train_button['state'] = tk.NORMAL
 
-def launch_process(patient, experience, type_process, drop_option=True):
+def launch_process(patient, experience, type_process, model, drop_option=True):
     if type_process == 'ANALYSE':
         analyse(patient, experience, drop_option)
     elif type_process == 'TRAIN':
-        train(patient, experience, drop_option)
+        print(f"model = {model}")
+        model, _ = train(patient, experience, drop_option, clf=model)
 
 def main_window():
     # Create Main window
+    model = None
     window = tk.Tk()
     window.title("Physio / EEG")
 
@@ -152,11 +186,13 @@ def main_window():
     drop_checkbutton = tk.Checkbutton(window, text="Drop Bad Channels", variable=drop_option)
     drop_checkbutton.pack(padx=10, pady=10)
 
-    # Buttons to start the process
-    analys_button = tk.Button(window, text="Launch the analysis", state="disabled", command=lambda:launch_process(patient_var.get(), experience_var.get(), type_process='ANALYSE',drop_option=drop_option.get()))
+    process_frame = tk.LabelFrame(window, text="Process")
+    process_frame.pack(padx=10, pady=10)
+    # Buttons to start a process
+    analys_button = tk.Button(process_frame, text="Launch the analysis", state="disabled", command=lambda:launch_process(patient_var.get(), experience_var.get(), type_process='ANALYSE', model=None, drop_option=drop_option.get()))
     analys_button.pack(padx=10, pady=10)
-    train_button = tk.Button(window, text="Train", state="disabled", command=lambda:launch_process(patient_var.get(), experience_var.get(), type_process='TRAIN',drop_option=drop_option.get()))
-    train_button.pack(padx=0, pady=0)
+    train_button = tk.Button(process_frame, text="Train", state="disabled", command=lambda:launch_process(patient_var.get(), experience_var.get(), type_process='TRAIN', model=model, drop_option=drop_option.get()))
+    train_button.pack(padx=10, pady=10)
 
     patient_combo.bind("<<ComboboxSelected>>", lambda event:change_button(analys_button, train_button, patient_var.get()))
 
