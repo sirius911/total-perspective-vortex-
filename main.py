@@ -1,6 +1,7 @@
 import sys
 import numpy as np
 import mne
+
 from mne import Epochs
 from mne.decoding import CSP 
 
@@ -15,6 +16,8 @@ from utils.experiments import experiments
 from utils.utils_raw import get_raw, drop_bad_channels, get_data, my_filter
 from utils.commun import colors
 from utils.graph import plot_learning_curve
+
+from utils.utils_window import Option, change_button
 
 from sklearn.pipeline import Pipeline
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -76,7 +79,7 @@ def train(subject:int, n_experience:int, drop_option, model, verbose=False):
         sys.stdout = default_stdout
     else:
         title = "Learning Curves "
-        plot_learning_curve(model['clf'], title, epochs_train, labels,cv=cv, n_jobs=-1, verbose=50)
+        plot_learning_curve(model['clf'], title, epochs_train, labels,cv=cv, n_jobs=-1)
         plt.show()
         print(f"Training with Patient #{colors.blue}{subject}{colors.reset} [{colors.green}{experiments[n_experience]['description']}{colors.reset}] ... Done")
     model['train'] = True
@@ -122,7 +125,7 @@ def predict(subject:int, n_experience:int, drop_option, model, verbose = False):
         print(f"Mean cross val score {mean_scores_ldashrinkage}")
     return mean_scores_ldashrinkage
 
-def analyse(subject:int, n_experience:int, drop_option):
+def analyse(subject:int, n_experience:int, drop_option, options):
 
     print("Process started with parameters : subject=", subject, ", experience=", n_experience)
     subject = int((subject))
@@ -136,40 +139,43 @@ def analyse(subject:int, n_experience:int, drop_option):
     
     raw.plot(scalings=dict(eeg=250e-6), title=title)
     plt.show()
+
     if drop_option:
         bad_channels = raw.info['bads']
-        raw = drop_bad_channels(raw, bad_channels)
+        raw = drop_bad_channels(raw, bad_channels, verbose=True)
 
+    if options.events.get():
+        # drawing events
+        event_dict = {value: key for key, value in experiments[n_experience]['mapping'].items()}
+        fig = mne.viz.plot_events(events, sfreq = raw.info['sfreq'], first_samp=raw.first_samp, event_id=event_dict)
+        fig.subplots_adjust(right= 0.8)
 
-    # drawing events
-    event_dict = {value: key for key, value in experiments[n_experience]['mapping'].items()}
-    fig = mne.viz.plot_events(events, sfreq = raw.info['sfreq'], first_samp=raw.first_samp, event_id=event_dict)
-    fig.subplots_adjust(right= 0.8)
+    if options.spectral.get():
+        # Perform spectral analysis on sensor data.
+        raw.compute_psd(picks='all').plot()
 
-    # Perform spectral analysis on sensor data.
-    raw.compute_psd(picks='all').plot()
+    if options.ica.get():
+        channels = raw.info["ch_names"]
 
-    channels = raw.info["ch_names"]
+        #ICA
+        ica = mne.preprocessing.ICA(n_components=len(channels) - 2, random_state=0)
+        raw_copy = raw.copy().filter(8,30)
 
-    #ICA
-    ica = mne.preprocessing.ICA(n_components=len(channels) - 2, random_state=0)
-    raw_copy = raw.copy().filter(8,30)
+        # The following electrodes have overlapping positions, which causes problems during visualization:
+        raw_copy.drop_channels(['T9', 'T10'], on_missing='ignore')
+        ica.fit(raw_copy)
+        ica.plot_components(outlines='head', inst=raw_copy, show_names=False)
 
-    # The following electrodes have overlapping positions, which causes problems during visualization:
-    raw_copy.drop_channels(['T9', 'T10'], on_missing='ignore')
-    ica.fit(raw_copy)
-    ica.plot_components(outlines='head', inst=raw_copy, show_names=False)
-
+    # draw the after traitement data
+    title = f"Patient #{subject} - {experiments[n_experience]['description'].title()} - AFTER TRAITEMENT"
+    raw = my_filter(raw, verbose=True)
+    raw.plot(scalings=dict(eeg=250e-6), title=title)
+    plt.show()
     print(f"Analyse of patient # {subject} ... done")
 
-def change_button(analys_button, train_button, patient):
-    if patient == 'All':
-        analys_button['state'] = tk.DISABLED
-    else:
-        analys_button['state'] = tk.NORMAL
-    train_button['state'] = tk.NORMAL
 
-def launch_process(patient, experience, type_process, drop_option=True):
+
+def launch_process(patient, experience, type_process, drop_option=True, options=None):
     global model
     verbose = False
     if patient == 'All':
@@ -178,7 +184,7 @@ def launch_process(patient, experience, type_process, drop_option=True):
         subjects = range(int(patient), int(patient) + 1)
         verbose = True
     if type_process == 'ANALYSE':
-        analyse(patient, experience, drop_option)
+        analyse(patient, experience, drop_option, options=options)
     elif type_process == 'TRAIN':
         scores =[]
         for subject in tqdm(subjects):
@@ -193,6 +199,8 @@ def launch_process(patient, experience, type_process, drop_option=True):
             score.append(predict(subject, experience, drop_option, model=model, verbose=verbose))
         print (f"mean = {np.mean(score)}")
     return model
+
+
 
 def main_window():
     # Create Main window
@@ -237,12 +245,10 @@ def main_window():
     train_frame = tk.LabelFrame(window, text="Training")
     train_frame.pack(padx=2, pady=2)
     
-    analyse_option1 = tk.BooleanVar(value=1)
-    analyse_check_option1 = tk.Checkbutton(analyse_frame, text="Events", variable=analyse_option1)
-    analyse_check_option1.pack(padx=2, pady=2)
+    options = Option(analyse_frame)
     # Buttons to start a process
     # button Analyse
-    analys_button = tk.Button(analyse_frame, text="Launch the analysis", state="disabled", command=lambda:launch_process(patient_var.get(), experience_var.get(), type_process='ANALYSE', drop_option=drop_option.get()))
+    analys_button = tk.Button(analyse_frame, text="Launch the analysis", state="disabled", command=lambda:launch_process(patient_var.get(), experience_var.get(), type_process='ANALYSE', drop_option=drop_option.get(), options=options))
     analys_button.pack(padx=10, pady=10)
     #button train
     train_button = tk.Button(train_frame, text="Train", state="disabled", command=lambda:launch_process(patient_var.get(), experience_var.get(), type_process='TRAIN', drop_option=drop_option.get()))
