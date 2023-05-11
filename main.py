@@ -14,7 +14,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from utils.experiments import experiments
-from utils.utils_raw import get_raw, drop_bad_channels, get_data, my_filter
+from utils.utils_raw import get_raw, drop_bad_channels, get_data, my_filter, save_model, get_path, load_model
 from utils.commun import colors
 from utils.graph import plot_learning_curve
 
@@ -27,14 +27,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.utils import parallel_backend
 from tqdm import tqdm
 
-save_path = (os.path.dirname(os.path.abspath(__file__))+"/save/")
-
-# model = {
-#     'train':False,
-#     'patient_list':[],
-#     'clf':None,
-#     'saved':False,
-# }
+save_path = (os.path.dirname(os.path.abspath(__file__))+"/save")
 
 def valid(test):
     result=""
@@ -45,7 +38,7 @@ def valid(test):
     result += (f"{colors.reset}")
     return result
 
-def train(subject:int, n_experience:int, drop_option, model, verbose=False):
+def train(subject:int, n_experience:int, drop_option, verbose=False):
     if verbose:
         print("Process start with parameters : subject=", subject, ", experience=", n_experience)
     n_experience = int(n_experience)
@@ -61,35 +54,36 @@ def train(subject:int, n_experience:int, drop_option, model, verbose=False):
     epochs_train, labels = get_data(raw)
     
     cv = ShuffleSplit(10, test_size=0.2, random_state=0)
-    if model['clf'] == None:
-        # Assemble a classifier #2
-        csp = CSP(2)
-        lda = LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto')
-        model['clf'] = Pipeline([("CSP", csp), ("LDA", lda)], verbose=False)
+    # Assemble a classifier #2
+    csp = CSP(2)
+    lda = LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto')
+    clf= Pipeline([("CSP", csp), ("LDA", lda)], verbose=False)
     
     # fit our pipeline to the experiment #1
     _, X_test, _, y_test = train_test_split(epochs_train, labels, random_state=0)
     if verbose == False:
         default_stdout = sys.stdout
-        # Rediriger la sortie vers null
+        # Rediriger la sortie vers nullpaht_model
         sys.stdout = open('/dev/null', 'w')
 
-    model['clf'].fit(epochs_train, labels)
-    predictions = model['clf'].predict(X_test)
+    clf.fit(epochs_train, labels)
+    predictions =clf.predict(X_test)
     score = accuracy_score(predictions, y_test)
     if verbose == False:
         # Restaurer la sortie par défaut
         sys.stdout = default_stdout
     else:
         title = "Learning Curves "
-        plot_learning_curve(model['clf'], title, epochs_train, labels,cv=cv, n_jobs=-1)
+        plot_learning_curve(clf, title, epochs_train, labels,cv=cv, n_jobs=-1)
         plt.show()
         print(f"Training with Patient #{colors.blue}{subject}{colors.reset} [{colors.green}{experiments[n_experience]['description']}{colors.reset}] ... Done")
-    model['train'] = True
-    model['patient_list'].append(subject)
-    return model,score
 
-def predict(subject:int, n_experience:int, drop_option, model, verbose = False):
+    #Save
+    save_model(clf, get_path(subject, n_experience, save_path), verbose=verbose)
+    
+    return score
+
+def predict(subject:int, n_experience:int, drop_option, verbose = False):
     print("Process start with parameters : subject=", subject, ", experience=", n_experience)
     
     subject = int((subject))
@@ -108,12 +102,14 @@ def predict(subject:int, n_experience:int, drop_option, model, verbose = False):
     # Read epochs
     epochs_train, labels = get_data(raw)
     _, X_test, _, y_test = train_test_split(epochs_train, labels, random_state=0)
+
+    model = load_model(get_path(subject, n_experience, save_path))
     if verbose == False:
         default_stdout = sys.stdout
         # Rediriger la sortie vers null
         sys.stdout = open('/dev/null', 'w')
-    predictions = model['clf'].predict(X_test)
-    scores_ldashrinkage = cross_val_score(model['clf'], epochs_train, labels, cv=cv, n_jobs=-1, verbose=0)
+    predictions = model.predict(X_test)
+    scores_ldashrinkage = cross_val_score(model, epochs_train, labels, cv=cv, n_jobs=-1, verbose=0)
     mean_scores_ldashrinkage = np.mean(scores_ldashrinkage)
 
     if verbose == False:
@@ -180,27 +176,25 @@ def analyse(subject:int, n_experience:int, drop_option, options):
 
 def launch_process(patient, experience, type_process, drop_option=True, options=None):
 
-    verbose = False
-    if patient == 'All':
-        subjects = range(1, 5)
-    else:
-        subjects = range(int(patient), int(patient) + 1)
-        verbose = True
-
     if type_process == 'ANALYSE':
         analyse(patient, experience, drop_option, options=options)
     elif type_process == 'TRAIN':
-        scores =[]
-        for subject in tqdm(subjects):
-            score = train(subject, experience, drop_option, verbose=verbose)
-            scores.append(score)
-        print(f"Training ...{colors.green}Ok{colors.reset}")
-        print(f"Mean score = {np.mean(scores)}")
+       
+        if patient == "All":
+            for subject in tqdm(range(1, 110)):
+                train(subject, experience, drop_option, verbose=False)
+        else:
+            train(int(patient), experience, drop_option, verbose=True)
+
     elif type_process == "PREDICT":
         score = []
-        for subject in tqdm(subjects):
-            score.append(predict(subject, experience, drop_option, verbose=verbose))
-        print (f"mean = {np.mean(score)}")
+        if patient == "All":
+            for subject in tqdm(range(1, 110)):
+                score.append(predict(subject, experience, drop_option, verbose=False))
+            print (f"mean = {np.mean(score)}")
+        else:
+            print(f"Score = {predict(int(patient), experience, drop_option, verbose=True)}")
+        
     return
 
 
@@ -281,8 +275,8 @@ def main_window():
     # Framework for experience choices
     experience_train = tk.LabelFrame(onglet_training, text="Experience")
     experience_train.pack(padx=10, pady=10)
-    experience_train_var = tk.IntVar(value=0)
 
+    experience_train_var = tk.IntVar(value=0)
     tk.Radiobutton(experience_train, text="Open and close left or right Fist", variable=experience_train_var, value=0).pack(anchor="w")
     tk.Radiobutton(experience_train, text="Imagine opening and closing left or right Fist", variable=experience_train_var, value=1).pack(anchor="w")
     tk.Radiobutton(experience_train, text="Open and close both Fists or both Feets", variable=experience_train_var, value=2).pack(anchor="w")
@@ -296,8 +290,30 @@ def main_window():
 
     ###### ONGLET PREDICT #######
 
-    predict_frame = tk.LabelFrame(onglet_predict, text="Predict")
+    predict_frame = tk.LabelFrame(onglet_predict, text="Experiences")
     predict_frame.pack(padx=2, pady=2)
+
+    experience_predict_var = tk.IntVar(value=0)
+    tk.Radiobutton(predict_frame, text="Open and close left or right Fist", variable=experience_predict_var, value=0).pack(anchor="w")
+    tk.Radiobutton(predict_frame, text="Imagine opening and closing left or right Fist", variable=experience_predict_var, value=1).pack(anchor="w")
+    tk.Radiobutton(predict_frame, text="Open and close both Fists or both Feets", variable=experience_predict_var, value=2).pack(anchor="w")
+    tk.Radiobutton(predict_frame, text="Imagine opening and closing both Fists or both Feets", variable=experience_predict_var, value=3).pack(anchor="w")
+    tk.Radiobutton(predict_frame, text="Movement (Real or Imagine) of fists", variable=experience_predict_var, value=4).pack(anchor="w")
+    tk.Radiobutton(predict_frame, text="Movement (Real or Imagine) of Fists or Feets", variable=experience_predict_var, value=5).pack(anchor="w")
+
+    # Framework for patient choices
+    patient_frame_predict = tk.LabelFrame(onglet_predict, text="Patient")
+    patient_frame_predict.pack(padx=10, pady=10)
+
+    patient_predict_var = tk.StringVar()
+    patient_predict_var.set("All")
+    patients = []
+    patients.append("All")
+    patients.extend(range(1, 110))
+
+    patient_predict_combo = ttk.Combobox(patient_frame_predict, textvariable=patient_predict_var, values=patients, state="readonly")
+    patient_predict_combo.pack(padx=10, pady=10)
+
     #button predict
     predict_button = tk.Button(onglet_predict, text="Predict", command=lambda:launch_process(patient=patient_predict_var.get(), experience=experience_var.get(), type_process="PREDICT", drop_option=drop_option.get()))
     predict_button.pack(padx=10, pady=10)
@@ -313,7 +329,7 @@ if __name__ == "__main__":
     print(save_path)
     if not os.path.exists(save_path):
         os.makedirs(save_path)
-    models_path = (save_path+"models/")
+    models_path = (save_path+"/models/")
     if not os.path.exists(models_path):
         os.makedirs(models_path)
     main_window()

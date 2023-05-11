@@ -2,6 +2,7 @@ import os
 import mne
 from .experiments import experiments
 from .commun import colors
+from joblib import dump, load
 
 path = os.getenv('HOME') + '/goinfre'
 
@@ -71,8 +72,20 @@ def get_data(raw):
     # print(epochs_train.shape)
     return epochs_train, labels
 
+def get_path(subject, n_experience, save_path):
+    path = f"{save_path}/models/E{n_experience}S{subject:03d}.mdl"
+    return path
+
 def my_filter(raw, verbose=False):
     # Apply band-pass filter
     # raw.notch_filter(60, picks='eeg', method="iir", verbose = 50)
     raw.filter(5.0, 40.0, fir_design="firwin", skip_by_annotation="edge", verbose=50)
     return raw
+
+def save_model(clf, path_model, verbose=False):
+    dump(clf, path_model)
+    if verbose:
+        print(f"Model [{colors.blue}{path_model}{colors.reset}] was saved!")
+
+def load_model(path_model):
+    return load(path_model)
