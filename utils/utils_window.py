@@ -19,9 +19,11 @@ class Option:
         self.spectral_checkbutton.pack(side="left")
         self.ica_checkbutton.pack(side="left")
 
-def change_button(analys_button, train_button, patient):
+def change_button_analyse(analys_button, patient):
     if patient == 'All':
         analys_button['state'] = tk.DISABLED
     else:
         analys_button['state'] = tk.NORMAL
+    
+def change_button_train(train_button, patient):
     train_button['state'] = tk.NORMAL
