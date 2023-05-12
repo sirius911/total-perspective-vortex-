@@ -7,7 +7,8 @@ from .experiments import experiments
 from .utils_raw import *
 
 def predict(subject:int, n_experience:int, drop_option, verbose = False):
-    print("Process start with parameters : subject=", subject, ", experience=", n_experience)
+    if verbose:
+        print("Process start with parameters : subject=", subject, ", experience=", n_experience)
     
     subject = int((subject))
     n_experience = int(n_experience)
@@ -32,8 +33,11 @@ def predict(subject:int, n_experience:int, drop_option, verbose = False):
         # Rediriger la sortie vers null
         sys.stdout = open('/dev/null', 'w')
     predictions = model.predict(X_test)
-    scores_ldashrinkage = cross_val_score(model, epochs_train, labels, cv=cv, n_jobs=-1, verbose=0)
-    mean_scores_ldashrinkage = np.mean(scores_ldashrinkage)
+    #accuracy score
+    score_subject = accuracy_score(predictions, y_test)
+    #cross_val_score
+    # score_subject = np.mean(cross_val_score(model, epochs_train, labels, cv=cv, n_jobs=-1, verbose=False))
+
 
     if verbose == False:
         # Restaurer la sortie par défaut
@@ -42,7 +46,6 @@ def predict(subject:int, n_experience:int, drop_option, verbose = False):
         print(f'event nb: [prediction] [truth] equal?')
         for i, prediction in enumerate(predictions):
             print(f'event {i:02d}: [{prediction}] [{y_test[i]}] {valid(prediction == y_test[i])}')
-        score_subject = accuracy_score(predictions, y_test)
         print(f'Mean accuracy for all experiments:{score_subject}')
-        print(f"Mean cross val score {mean_scores_ldashrinkage}")
-    return mean_scores_ldashrinkage
+        # print(f"Mean cross val score {mean_scores_ldashrinkage}")
+    return score_subject
