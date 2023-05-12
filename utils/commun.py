@@ -8,3 +8,12 @@ class colors:
     yellow = '\033[93m' # jaune
     red = '\033[91m' # rouge
     reset = '\033[0m' #gris, couleur normales
+
+def valid(test):
+    result=""
+    if test:
+        result = (f"{colors.green}Ok")
+    else:
+        result = (f"{colors.red}Ko")
+    result += (f"{colors.reset}")
+    return result

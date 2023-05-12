@@ -13,12 +13,12 @@ def drop_bad_channels(raw, bad_channels=None, verbose=False):
     """
     channels = raw.info["ch_names"]
     if len(bad_channels) == 0:
-        # good_channels = ["FC5", "FC3", "FC1", "FCz", "FC2", "FC4", "FC6",
-        #                 "C5",  "C3",  "C1",  "Cz",  "C2",  "C4",  "C6",
-        #                 "CP5", "CP3", "CP1", "CPz", "CP2", "CP4", "CP6"]
+        good_channels = ["FC5", "FC3", "FC1", "FCz", "FC2", "FC4", "FC6",
+                        "C5",  "C3",  "C1",  "Cz",  "C2",  "C4",  "C6",
+                        "CP5", "CP3", "CP1", "CPz", "CP2", "CP4", "CP6"]
         
-        # bad_channels = [x for x in channels if x not in good_channels]
-        bad_channels = ['PO7', 'P8', 'P6', 'P2', 'P1', 'P5', 'P7', 'TP8', 'TP7', 'T10', 'T9', 'T8', 'T7', 'FT8', 'FT7', 'F2', 'F8', 'F1', 'F5', 'F7', 'AF8', 'AF7', 'Fp2', 'Fpz', 'CP6', 'CP2', 'CP1', 'CP5', 'C6', 'C2', 'C5', 'FC6', 'FC2', 'FC5', 'FC1', 'PO8', 'O1', 'O2', 'F6']
+        bad_channels = [x for x in channels if x not in good_channels]
+        # bad_channels = ['PO7', 'P8', 'P6', 'P2', 'P1', 'P5', 'P7', 'TP8', 'TP7', 'T10', 'T9', 'T8', 'T7', 'FT8', 'FT7', 'F2', 'F8', 'F1', 'F5', 'F7', 'AF8', 'AF7', 'Fp2', 'Fpz', 'CP6', 'CP2', 'CP1', 'CP5', 'C6', 'C2', 'C5', 'FC6', 'FC2', 'FC5', 'FC1', 'PO8', 'O1', 'O2', 'F6']
     raw.drop_channels(bad_channels)
     if verbose:
         print(f"{colors.red}Drop {len(bad_channels)} Bad channel(s).{colors.reset}")
@@ -78,7 +78,7 @@ def get_path(subject:int, n_experience:int):
 
 def my_filter(raw, verbose=False):
     # Apply band-pass filter
-    # raw.notch_filter(60, picks='eeg', method="iir", verbose = 50)
+    raw.notch_filter(60, picks='eeg', method="iir", verbose = 50)
     raw.filter(5.0, 40.0, fir_design="firwin", skip_by_annotation="edge", verbose=50)
     return raw
 
