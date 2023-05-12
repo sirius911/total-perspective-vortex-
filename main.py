@@ -14,11 +14,11 @@ import tkinter as tk
 from tkinter import ttk
 
 from utils.experiments import experiments
-from utils.utils_raw import get_raw, drop_bad_channels, get_data, my_filter, save_model, get_path, load_model
-from utils.commun import colors
+from utils.utils_raw import get_raw, drop_bad_channels, get_data, my_filter, save_model, get_path, load_model, get_predict
+from utils.commun import *
 from utils.graph import plot_learning_curve
 
-from utils.utils_window import Option, change_button_analyse, change_button_train
+from utils.utils_window import Option, change_button_analyse, change_button_predict, change_radiobutton_predict
 
 from sklearn.pipeline import Pipeline
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -26,8 +26,6 @@ from sklearn.model_selection import cross_val_score, train_test_split, ShuffleSp
 from sklearn.metrics import accuracy_score
 from sklearn.utils import parallel_backend
 from tqdm import tqdm
-
-save_path = (os.path.dirname(os.path.abspath(__file__))+"/save")
 
 def valid(test):
     result=""
@@ -79,7 +77,7 @@ def train(subject:int, n_experience:int, drop_option, verbose=False):
         print(f"Training with Patient #{colors.blue}{subject}{colors.reset} [{colors.green}{experiments[n_experience]['description']}{colors.reset}] ... Done")
 
     #Save
-    save_model(clf, get_path(subject, n_experience, save_path), verbose=verbose)
+    save_model(clf, get_path(subject, n_experience), verbose=verbose)
     
     return score
 
@@ -103,7 +101,7 @@ def predict(subject:int, n_experience:int, drop_option, verbose = False):
     epochs_train, labels = get_data(raw)
     _, X_test, _, y_test = train_test_split(epochs_train, labels, random_state=0)
 
-    model = load_model(get_path(subject, n_experience, save_path))
+    model = load_model(get_path(subject, n_experience))
     if verbose == False:
         default_stdout = sys.stdout
         # Rediriger la sortie vers null
@@ -174,8 +172,7 @@ def analyse(subject:int, n_experience:int, drop_option, options):
 
 
 
-def launch_process(patient, experience, type_process, drop_option=True, options=None):
-
+def launch_process(patient, experience, type_process, drop_option=True, options=None, liste=[]):
     if type_process == 'ANALYSE':
         analyse(patient, experience, drop_option, options=options)
     elif type_process == 'TRAIN':
@@ -189,7 +186,7 @@ def launch_process(patient, experience, type_process, drop_option=True, options=
     elif type_process == "PREDICT":
         score = []
         if patient == "All":
-            for subject in tqdm(range(1, 110)):
+            for subject in tqdm(liste):
                 score.append(predict(subject, experience, drop_option, verbose=False))
             print (f"mean = {np.mean(score)}")
         else:
@@ -292,44 +289,48 @@ def main_window():
 
     predict_frame = tk.LabelFrame(onglet_predict, text="Experiences")
     predict_frame.pack(padx=2, pady=2)
-
+    patient_predict_combo=None
     experience_predict_var = tk.IntVar(value=0)
-    tk.Radiobutton(predict_frame, text="Open and close left or right Fist", variable=experience_predict_var, value=0).pack(anchor="w")
-    tk.Radiobutton(predict_frame, text="Imagine opening and closing left or right Fist", variable=experience_predict_var, value=1).pack(anchor="w")
-    tk.Radiobutton(predict_frame, text="Open and close both Fists or both Feets", variable=experience_predict_var, value=2).pack(anchor="w")
-    tk.Radiobutton(predict_frame, text="Imagine opening and closing both Fists or both Feets", variable=experience_predict_var, value=3).pack(anchor="w")
-    tk.Radiobutton(predict_frame, text="Movement (Real or Imagine) of fists", variable=experience_predict_var, value=4).pack(anchor="w")
-    tk.Radiobutton(predict_frame, text="Movement (Real or Imagine) of Fists or Feets", variable=experience_predict_var, value=5).pack(anchor="w")
-
+    rb1=tk.Radiobutton(predict_frame, text="Open and close left or right Fist", variable=experience_predict_var, value=0, command = lambda : change_radiobutton_predict(0, patient_predict_combo, predict_button))
+    rb1.pack(anchor="w")
+    rb2=tk.Radiobutton(predict_frame, text="Imagine opening and closing left or right Fist", variable=experience_predict_var, value=1, command = lambda : change_radiobutton_predict(1, patient_predict_combo, predict_button))
+    rb2.pack(anchor="w")
+    rb3=tk.Radiobutton(predict_frame, text="Open and close both Fists or both Feets", variable=experience_predict_var, value=2,command = lambda : change_radiobutton_predict(2, patient_predict_combo, predict_button))
+    rb3.pack(anchor="w")
+    rb4=tk.Radiobutton(predict_frame, text="Imagine opening and closing both Fists or both Feets", variable=experience_predict_var, value=3, command = lambda : change_radiobutton_predict(3, patient_predict_combo, predict_button))
+    rb4.pack(anchor="w")
+    rb5=tk.Radiobutton(predict_frame, text="Movement (Real or Imagine) of fists", variable=experience_predict_var, value=4, command = lambda : change_radiobutton_predict(4, patient_predict_combo, predict_button))
+    rb5.pack(anchor="w")
+    rb6=tk.Radiobutton(predict_frame, text="Movement (Real or Imagine) of Fists or Feets", variable=experience_predict_var, value=5, command = lambda : change_radiobutton_predict(5, patient_predict_combo, predict_button))
+    rb6.pack(anchor="w")
+    # rb1.select()
     # Framework for patient choices
     patient_frame_predict = tk.LabelFrame(onglet_predict, text="Patient")
     patient_frame_predict.pack(padx=10, pady=10)
 
     patient_predict_var = tk.StringVar()
-    patient_predict_var.set("All")
-    patients = []
-    patients.append("All")
-    patients.extend(range(1, 110))
+    patients = get_predict(n_experience=experience_predict_var.get())
 
     patient_predict_combo = ttk.Combobox(patient_frame_predict, textvariable=patient_predict_var, values=patients, state="readonly")
+    patient_predict_combo.set("Select patient")
     patient_predict_combo.pack(padx=10, pady=10)
 
     #button predict
-    predict_button = tk.Button(onglet_predict, text="Predict", command=lambda:launch_process(patient=patient_predict_var.get(), experience=experience_var.get(), type_process="PREDICT", drop_option=drop_option.get()))
+    predict_button = tk.Button(onglet_predict, text="Predict", state="disabled", command=lambda:launch_process(patient=patient_predict_var.get(), experience=experience_predict_var.get(), type_process="PREDICT", drop_option=drop_option.get(), liste=patient_predict_combo['values'][1:]))
     predict_button.pack(padx=10, pady=10)
 
     #Interactiv
     patient_analyse_combo.bind("<<ComboboxSelected>>", lambda event:change_button_analyse(analys_button, patient_analyse_var.get()))
-
+    patient_predict_combo.bind("<<ComboboxSelected>>", lambda event:change_button_predict(predict_button, patient_predict_var.get()))
     onglets.pack()
     # Launching the event loop of the window
     window.mainloop()
 
 if __name__ == "__main__":
-    print(save_path)
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-    models_path = (save_path+"/models/")
+    print(SAVE_PATH)
+    if not os.path.exists(SAVE_PATH):
+        os.makedirs(SAVE_PATH)
+    models_path = (SAVE_PATH+"/models/")
     if not os.path.exists(models_path):
         os.makedirs(models_path)
     main_window()

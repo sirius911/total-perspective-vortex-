@@ -1,3 +1,7 @@
+import os
+
+SAVE_PATH = (os.path.dirname(os.path.abspath('main.py'))+"/save")
+
 class colors:
     green = '\033[92m' # vert
     blue = '\033[94m' # blue

@@ -1,7 +1,7 @@
 import os
 import mne
 from .experiments import experiments
-from .commun import colors
+from .commun import *
 from joblib import dump, load
 
 path = os.getenv('HOME') + '/goinfre'
@@ -72,8 +72,8 @@ def get_data(raw):
     # print(epochs_train.shape)
     return epochs_train, labels
 
-def get_path(subject, n_experience, save_path):
-    path = f"{save_path}/models/E{n_experience}S{subject:03d}.mdl"
+def get_path(subject:int, n_experience:int):
+    path = f"{SAVE_PATH}/models/E{n_experience}S{subject:03d}.mdl"
     return path
 
 def my_filter(raw, verbose=False):
@@ -82,10 +82,22 @@ def my_filter(raw, verbose=False):
     raw.filter(5.0, 40.0, fir_design="firwin", skip_by_annotation="edge", verbose=50)
     return raw
 
-def save_model(clf, path_model, verbose=False):
+def save_model(clf, path_model:str, verbose=False):
     dump(clf, path_model)
     if verbose:
         print(f"Model [{colors.blue}{path_model}{colors.reset}] was saved!")
 
 def load_model(path_model):
     return load(path_model)
+
+def get_predict(n_experience:int):
+    """
+    return a list off subjects who can be predict
+    """
+    list_subject=[]
+    for subject in range(1,110):
+        if os.path.exists(get_path(subject=subject, n_experience=n_experience)):
+            list_subject.append(subject)
+    if len(list_subject) > 1:
+        list_subject.insert(0, 'All')
+    return list_subject
