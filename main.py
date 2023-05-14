@@ -6,6 +6,7 @@ from utils.utils_window import create_window
 def main_window():
     
     window = create_window()
+    
     # Launching the event loop of the window
     window.mainloop()
 
