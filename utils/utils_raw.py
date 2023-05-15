@@ -36,7 +36,7 @@ def get_raw(subject, n_experience, runs):
 
     """
     #load list of file for subject and #experience(runs)
-    files_name = mne.datasets.eegbci.load_data(subject=subject, runs=runs ,path=path)
+    files_name = mne.datasets.eegbci.load_data(subject=subject, runs=runs ,path=path, verbose=50)
 
     #concatenate all the file in one raw
     raw = mne.io.concatenate_raws([mne.io.read_raw_edf(f, preload=True, verbose=50) for f in files_name])
@@ -72,8 +72,16 @@ def get_data(raw):
     # print(epochs_train.shape)
     return epochs_train, labels
 
+def get_name_model(subject:int, n_experience:int) -> str:
+    name = f"E{n_experience}S{subject:03d}"
+    return name
+
+def get_path_models():
+    path = f"{SAVE_PATH}/models/"
+    return path
+
 def get_path(subject:int, n_experience:int):
-    path = f"{SAVE_PATH}/models/E{n_experience}S{subject:03d}.mdl"
+    path = f"{get_path_models()}{get_name_model(subject, n_experience)}.mdl"
     return path
 
 def my_filter(raw, verbose=False):
@@ -90,14 +98,62 @@ def save_model(clf, path_model:str, verbose=False):
 def load_model(path_model):
     return load(path_model)
 
-def get_predict(n_experience:int):
+def exist(subject:int, n_experience:int) -> bool:
+    return os.path.exists(get_path(subject= int(subject), n_experience= n_experience))
+
+# def get_predict(n_experience:int):
+#     """
+#     return a list off subjects who can be predict
+#     """
+#     list_subject=[]
+#     for subject in range(1,110):
+#         if os.path.exist(subject=subject, n_experience=n_experience):
+#             list_subject.append(subject)
+#     if len(list_subject) > 1:
+#         list_subject.insert(0, 'All')
+#     return list_subject
+
+def get_list_experience(subject:int) -> list:
     """
-    return a list off subjects who can be predict
+        Return a list of experience trained with the subject or []
     """
-    list_subject=[]
-    for subject in range(1,110):
-        if os.path.exists(get_path(subject=subject, n_experience=n_experience)):
-            list_subject.append(subject)
+    if subject == 'All':
+        ensemble = set()
+        for sub in range(1,110):
+            for exp in range(6):
+                if exist(subject= int(sub), n_experience= exp):
+                    ensemble.update({exp})
+            if len(ensemble) >=6:
+                break
+        return list(ensemble)
+    else:
+        list_exp = []
+        for exp in range(6):
+            if exist(subject= int(subject), n_experience= exp):
+                    list_exp.append(exp)
+        return list_exp
+
+def what_predict(subject:int):
+    """
+        Return a list of number of experience who can be predict with subject
+    """
+    ensemble = set()
+    list_exp = get_list_experience(subject)
+    if len(list_exp) > 0:
+        for exp in list_exp:
+            ensemble.update(experiments[exp]['predictions'])
+    return list(ensemble)
+
+def get_list_trained_subject():
+    """
+        return list of trained subject or []
+    """
+    list_subject = []
+    for sub in range(110):
+        for exp in range(6):
+            if exist(subject=sub, n_experience=exp):
+                list_subject.append(sub)
+                break
     if len(list_subject) > 1:
         list_subject.insert(0, 'All')
     return list_subject

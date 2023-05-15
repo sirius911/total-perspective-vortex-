@@ -1,11 +1,13 @@
 import os
+import tkinter as tk
 from utils.commun import SAVE_PATH
 from utils.utils_window import create_window
 
 
 def main_window():
-    
-    window = create_window()
+    # Create Main window
+    window = tk.Tk()
+    window = create_window(window)
     
     # Launching the event loop of the window
     window.mainloop()
@@ -17,6 +19,7 @@ if __name__ == "__main__":
     models_path = (SAVE_PATH+"/models/")
     if not os.path.exists(models_path):
         os.makedirs(models_path)
+
     main_window()
     print("Good bye !")
 
