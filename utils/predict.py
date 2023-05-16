@@ -13,10 +13,9 @@ def predict(subject:int, n_experience:int, model=None, drop_option= True, verbos
     subject = int((subject))
     n_experience = int(n_experience)
     runs = experiments[n_experience]['runs']
-    raw, _ = get_raw(subject = subject, n_experience=n_experience, runs=runs)
+    raw, _ = get_raw(subject = subject, n_experience=n_experience, runs=runs, drop_option=drop_option)
     if drop_option:
-        bad_channels = raw.info['bads']
-        raw = drop_bad_channels(raw, bad_channels, verbose)
+        raw = raw = drop_bad_channels(raw=raw, name=get_name_model(subject=subject, n_experience=n_experience),save=False , verbose=verbose)
 
     # Apply band-pass filter
     raw = my_filter(raw,verbose=verbose)

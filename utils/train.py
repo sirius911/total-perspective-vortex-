@@ -17,11 +17,10 @@ def train(subject:int, n_experience:int, drop_option, verbose=False):
         print("Process start with parameters : subject=", subject, ", experience=", n_experience)
     n_experience = int(n_experience)
     runs = experiments[n_experience]['runs']
-    raw, _ = get_raw(subject = subject, n_experience=n_experience, runs=runs)
+    raw, _ = get_raw(subject = subject, n_experience=n_experience, runs=runs, drop_option=drop_option)
     
     if drop_option:
-        bad_channels = raw.info['bads']
-        raw = drop_bad_channels(raw, bad_channels, verbose)
+        raw = drop_bad_channels(raw=raw, name=get_name_model(subject=subject, n_experience=n_experience),save=False , verbose=verbose)
     
     raw = my_filter(raw, verbose)
     # Read epochs (events)
@@ -54,5 +53,4 @@ def train(subject:int, n_experience:int, drop_option, verbose=False):
 
     #Save
     save_model(clf, get_path(subject, n_experience), verbose=verbose)
-    
     return score

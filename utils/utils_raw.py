@@ -1,7 +1,7 @@
 import os
 import mne
 import json
-from .experiments import experiments
+from .experiments import experiments, BAD_CHANNELS
 from .commun import *
 from joblib import dump, load
 
@@ -18,29 +18,19 @@ def load_bad_channels(name) -> list:
 
 def save_bad_channels(bad_channels:list, name:str, verbose=False):
     path_bad_channels = f"{get_path_bad_channels()}{name}.json"
-    if os.path.exists(path_bad_channels):
-        old_list = load_bad_channels(name)
-        list_to_save = old_list + [item for item in bad_channels if item not in old_list]
-    else:
-        list_to_save = bad_channels
+    list_to_save = bad_channels
+
     with open(path_bad_channels, 'w') as file:
         json.dump(list_to_save, file)
         if verbose:
             print(f"{colors.green} Saved{colors.reset}")
 
-def drop_bad_channels(raw, bad_channels=None, name='', save=False, verbose=False):
+def drop_bad_channels(raw, name:str, save=False, verbose=False):
     """
-        functoin deleting bad_channels to the raw
+        function deleting bad_channels to the raw
         if bad_channels == None it delete a predefined hard list 
     """
-    channels = raw.info["ch_names"]
-    if len(bad_channels) == 0:
-        good_channels = ["FC5", "FC3", "FC1", "FCz", "FC2", "FC4", "FC6",
-                        "C5",  "C3",  "C1",  "Cz",  "C2",  "C4",  "C6",
-                        "CP5", "CP3", "CP1", "CPz", "CP2", "CP4", "CP6"]
-        
-        bad_channels = [x for x in channels if x not in good_channels]
-        # bad_channels = ['PO7', 'P8', 'P6', 'P2', 'P1', 'P5', 'P7', 'TP8', 'TP7', 'T10', 'T9', 'T8', 'T7', 'FT8', 'FT7', 'F2', 'F8', 'F1', 'F5', 'F7', 'AF8', 'AF7', 'Fp2', 'Fpz', 'CP6', 'CP2', 'CP1', 'CP5', 'C6', 'C2', 'C5', 'FC6', 'FC2', 'FC5', 'FC1', 'PO8', 'O1', 'O2', 'F6']
+    bad_channels = raw.info['bads']
     raw.drop_channels(bad_channels)
     if verbose:
         print(f"{colors.red}Drop {len(bad_channels)} Bad channel(s).{colors.reset} -> ", end='')
@@ -50,7 +40,7 @@ def drop_bad_channels(raw, bad_channels=None, name='', save=False, verbose=False
         print(f"{colors.blue}Ok{colors.reset}")
     return raw
 
-def get_raw(subject, n_experience, runs):
+def get_raw(subject, n_experience, runs, drop_option):
     """
         function loading data from physionet
         args:
@@ -82,6 +72,14 @@ def get_raw(subject, n_experience, runs):
     montage = mne.channels.make_standard_montage("biosemi64")
     raw.set_montage(montage, on_missing='ignore')
 
+    # Drop bad_channels
+    name=get_name_model(subject=subject, n_experience=n_experience)
+    path_bad_channels = f"{get_path_bad_channels()}{name}.json"
+    if drop_option:
+        if os.path.exists(path_bad_channels):
+            raw.info['bads'] = load_bad_channels(name)
+        else:
+            raw.info['bads'] = BAD_CHANNELS
     return raw, events
 
 def get_data(raw):
