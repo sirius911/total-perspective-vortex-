@@ -1,6 +1,7 @@
 import os
 
 SAVE_PATH = (os.path.dirname(os.path.abspath('main.py'))+"/save")
+PATH_DATA = os.getenv('HOME') + '/goinfre'
 
 class colors:
     green = '\033[92m' # vert

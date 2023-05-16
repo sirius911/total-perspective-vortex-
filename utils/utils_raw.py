@@ -1,12 +1,34 @@
 import os
 import mne
+import json
 from .experiments import experiments
 from .commun import *
 from joblib import dump, load
 
-path = os.getenv('HOME') + '/goinfre'
 
-def drop_bad_channels(raw, bad_channels=None, verbose=False):
+
+def get_path_bad_channels() -> str:
+    return (f"{SAVE_PATH}/bad_channels/")
+
+def load_bad_channels(name) -> list:
+    path_bad_channels = f"{get_path_bad_channels()}{name}.json"
+    with open(path_bad_channels, 'r') as file:
+        bad_channels = json.load(file)
+    return bad_channels
+
+def save_bad_channels(bad_channels:list, name:str, verbose=False):
+    path_bad_channels = f"{get_path_bad_channels()}{name}.json"
+    if os.path.exists(path_bad_channels):
+        old_list = load_bad_channels(name)
+        list_to_save = old_list + [item for item in bad_channels if item not in old_list]
+    else:
+        list_to_save = bad_channels
+    with open(path_bad_channels, 'w') as file:
+        json.dump(list_to_save, file)
+        if verbose:
+            print(f"{colors.green} Saved{colors.reset}")
+
+def drop_bad_channels(raw, bad_channels=None, name='', save=False, verbose=False):
     """
         functoin deleting bad_channels to the raw
         if bad_channels == None it delete a predefined hard list 
@@ -21,7 +43,11 @@ def drop_bad_channels(raw, bad_channels=None, verbose=False):
         # bad_channels = ['PO7', 'P8', 'P6', 'P2', 'P1', 'P5', 'P7', 'TP8', 'TP7', 'T10', 'T9', 'T8', 'T7', 'FT8', 'FT7', 'F2', 'F8', 'F1', 'F5', 'F7', 'AF8', 'AF7', 'Fp2', 'Fpz', 'CP6', 'CP2', 'CP1', 'CP5', 'C6', 'C2', 'C5', 'FC6', 'FC2', 'FC5', 'FC1', 'PO8', 'O1', 'O2', 'F6']
     raw.drop_channels(bad_channels)
     if verbose:
-        print(f"{colors.red}Drop {len(bad_channels)} Bad channel(s).{colors.reset}")
+        print(f"{colors.red}Drop {len(bad_channels)} Bad channel(s).{colors.reset} -> ", end='')
+    if save:
+        save_bad_channels(bad_channels,name, verbose)
+    else:
+        print(f"{colors.blue}Ok{colors.reset}")
     return raw
 
 def get_raw(subject, n_experience, runs):
@@ -36,7 +62,7 @@ def get_raw(subject, n_experience, runs):
 
     """
     #load list of file for subject and #experience(runs)
-    files_name = mne.datasets.eegbci.load_data(subject=subject, runs=runs ,path=path, verbose=50)
+    files_name = mne.datasets.eegbci.load_data(subject=subject, runs=runs ,path=PATH_DATA, verbose=50)
 
     #concatenate all the file in one raw
     raw = mne.io.concatenate_raws([mne.io.read_raw_edf(f, preload=True, verbose=50) for f in files_name])
@@ -76,9 +102,8 @@ def get_name_model(subject:int, n_experience:int) -> str:
     name = f"E{n_experience}S{subject:03d}"
     return name
 
-def get_path_models():
-    path = f"{SAVE_PATH}/models/"
-    return path
+def get_path_models() -> str:
+    return (f"{SAVE_PATH}/models/")
 
 def get_path(subject:int, n_experience:int):
     path = f"{get_path_models()}{get_name_model(subject, n_experience)}.mdl"

@@ -19,7 +19,9 @@ if __name__ == "__main__":
     models_path = (SAVE_PATH+"/models/")
     if not os.path.exists(models_path):
         os.makedirs(models_path)
-
+    bad_channels=SAVE_PATH+"/bad_channels/"
+    if not os.path.exists(bad_channels):
+        os.makedirs(bad_channels)
     main_window()
     print("Good bye !")
 

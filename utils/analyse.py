@@ -5,14 +5,16 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 def analyse(subject:int, n_experience:int, drop_option, options):
-
     print("Process started with parameters : subject=", subject, ", experience=", n_experience)
     subject = int((subject))
     n_experience = int(n_experience)
     runs = experiments[n_experience]['runs']
-
+    name=get_name_model(subject=subject, n_experience=n_experience)
     raw, events = get_raw(subject = subject, n_experience=n_experience, runs=runs)
-
+    path_bad_channels = f"{get_path_bad_channels()}{name}.json"
+    if drop_option and os.path.exists(path_bad_channels):
+        old_list = load_bad_channels(name)
+        raw.info['bads'] = old_list
     # draw the first data
     title = f"Patient #{subject} - {experiments[n_experience]['description'].title()} - BEFORE TRAITEMENT"
     
@@ -21,7 +23,7 @@ def analyse(subject:int, n_experience:int, drop_option, options):
 
     if drop_option:
         bad_channels = raw.info['bads']
-        raw = drop_bad_channels(raw, bad_channels, verbose=True)
+        raw = drop_bad_channels(raw=raw, bad_channels=bad_channels, name=name, save=True, verbose=True)
 
     if options.events.get():
         # drawing events
@@ -50,4 +52,7 @@ def analyse(subject:int, n_experience:int, drop_option, options):
     raw = my_filter(raw, verbose=True)
     raw.plot(scalings=dict(eeg=250e-6), title=title)
     plt.show()
+    if drop_option:
+        bad_channels = raw.info['bads']
+        raw = drop_bad_channels(raw=raw, bad_channels=bad_channels, name=name, save=True, verbose=True)
     print(f"Analyse of patient # {subject} ... done")
