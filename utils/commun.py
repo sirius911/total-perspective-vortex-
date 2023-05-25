@@ -18,3 +18,10 @@ def valid(test):
         result = (f"{colors.red}Ko")
     result += (f"{colors.reset}")
     return result
+
+def colorize(percentage: float) -> str:
+    if percentage >= 0.9:
+        return colors.green + f'{percentage:.2%}' + colors.reset
+    if percentage >= 0.70:
+        return colors.yellow + f'{percentage:.2%}' + colors.reset
+    return colors.red + f'{percentage:.2%}' + colors.reset

@@ -1,6 +1,7 @@
 import os
 import mne
 import json
+from sklearn.model_selection import train_test_split
 from .experiments import experiments, BAD_CHANNELS
 from .commun import *
 from joblib import dump, load
@@ -36,11 +37,9 @@ def drop_bad_channels(raw, name:str, save=False, verbose=False):
         print(f"{colors.red}Drop {len(bad_channels)} Bad channel(s).{colors.reset} -> ", end='')
     if save:
         save_bad_channels(bad_channels,name, verbose)
-    else:
-        print(f"{colors.blue}Ok{colors.reset}")
     return raw
 
-def get_raw(subject, n_experience, runs, drop_option):
+def get_raw(subject, n_experience, drop_option):
     """
         function loading data from physionet
         args:
@@ -51,6 +50,8 @@ def get_raw(subject, n_experience, runs, drop_option):
         return mne.raw and events
 
     """
+    runs = experiments[n_experience]['runs']
+
     #load list of file for subject and #experience(runs)
     files_name = mne.datasets.eegbci.load_data(subject=subject, runs=runs ,path=PATH_DATA, verbose=50)
 
@@ -124,7 +125,13 @@ def load_model(path_model):
 def exist(subject:int, n_experience:int) -> bool:
     return os.path.exists(get_path(subject= int(subject), n_experience= n_experience))
 
-# def get_predict(n_experience:int):
+# def get_predict(n_experience:int):def perso_splitter(raw):
+    """
+    Return the data raw in 80% to train and 20% to test
+    """
+    X, Y = get_data(raw)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y,train_size=0.8, random_state=42)
+    return X_train, X_test, y_train, y_test
 #     """
 #     return a list off subjects who can be predict
 #     """
@@ -138,7 +145,7 @@ def exist(subject:int, n_experience:int) -> bool:
 
 def get_list_experience(subject:int) -> list:
     """
-        Return a list of experience trained with the subject or []
+        return the list of experiences trained with the subject or [] if none
     """
     if subject == 'All':
         ensemble = set()
@@ -158,7 +165,7 @@ def get_list_experience(subject:int) -> list:
 
 def what_predict(subject:int):
     """
-        Return a list of number of experience who can be predict with subject
+       returns a list of experience numbers that can be predicted by the subject
     """
     ensemble = set()
     list_exp = get_list_experience(subject)
@@ -169,7 +176,7 @@ def what_predict(subject:int):
 
 def get_list_trained_subject():
     """
-        return list of trained subject or []
+        returns the list of trained subjects or [] if none
     """
     list_subject = []
     for sub in range(110):
@@ -180,3 +187,11 @@ def get_list_trained_subject():
     if len(list_subject) > 1:
         list_subject.insert(0, 'All')
     return list_subject
+
+def perso_splitter(raw):
+    """
+    Return the data raw in 80% to train and 20% to test
+    """
+    X, Y = get_data(raw)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y,train_size=0.8, random_state=42)
+    return X_train, X_test, y_train, y_test

@@ -75,7 +75,7 @@ def plot_learning_curve(estimator, title, X, y, axes=None, ylim=None, cv=None,
     train_sizes, train_scores, test_scores, fit_times, _ = \
         learning_curve(estimator, X, y, cv=cv, n_jobs=n_jobs,
                        train_sizes=train_sizes,
-                       return_times=True)
+                       return_times=True, verbose=False)
     train_scores_mean = np.mean(train_scores, axis=1)
     train_scores_std = np.std(train_scores, axis=1)
     test_scores_mean = np.mean(test_scores, axis=1)

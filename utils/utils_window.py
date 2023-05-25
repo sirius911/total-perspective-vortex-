@@ -10,9 +10,9 @@ from .predict import launch_predict
 from .experiments import experiments
 from .commun import colors
 
-def test(objet):
+def click_predict_choice(objet):
     button = objet.window.predict_button
-    if objet.has_select() and objet.window.trained_choice.has_select():
+    if objet.window.predict_choice.has_select() and objet.window.trained_choice.has_select():
         button['state'] = tk.NORMAL
     else:
         button['state'] = tk.DISABLED
@@ -42,7 +42,7 @@ class Predict_choice:
         self.box = []
         self.val = [tk.BooleanVar(value=False) for _ in range(6)]
         for num, exp in enumerate(experiments):
-            self.box.append(tk.Checkbutton(parent, text=exp["description"], variable=self.val[num], state="disabled",  command=lambda:test(self)))
+            self.box.append(tk.Checkbutton(parent, text=exp["description"], variable=self.val[num], state="disabled",  command=lambda:click_predict_choice(self)))
         for b in self.box:
             b.pack(anchor="w")
 
@@ -102,7 +102,7 @@ def change_button_analyse(analys_button, patient):
 #     predict_button['state'] = tk.DISABLED
     
 
-def change_button_predict(predict_button, patient, window):
+def change_button_predict(patient, window):
     predict_choice, trained_choice = window.predict_choice, window.trained_choice
     # if patient is not None or patient != '':
     #     predict_button['state'] = tk.NORMAL
@@ -185,9 +185,9 @@ def create_window(window) -> tk:
     tk.Radiobutton(experience_frame, text="Movement (Real or Imagine) of Fists or Feets", variable=experience_var, value=5).pack(anchor="w")
 
     # Checkbox for Drop bad channels option
-    drop_option =  tk.BooleanVar(value=True)
-    drop_checkbutton = tk.Checkbutton(onglet_analyse, text="Drop Bad Channels", variable=drop_option)
-    drop_checkbutton.pack(padx=10, pady=10)
+    drop_option_analyse =  tk.BooleanVar(value=True)
+    drop_checkbutton_analyse = tk.Checkbutton(onglet_analyse, text="Drop Bad Channels", variable=drop_option_analyse)
+    drop_checkbutton_analyse.pack(padx=10, pady=10)
 
     #frames
     options_analyse_frame = tk.LabelFrame(onglet_analyse, text="Options")
@@ -196,7 +196,7 @@ def create_window(window) -> tk:
     options = Option(options_analyse_frame)
 
     # button Analyse
-    analys_button = tk.Button(onglet_analyse, text="Launch the analysis", state="disabled", command=lambda:launch_process(patient_analyse_var.get(), experience_var.get(), type_process='ANALYSE', drop_option=drop_option.get(), options=options))
+    analys_button = tk.Button(onglet_analyse, text="Launch the analysis", state="disabled", command=lambda:launch_process(patient_analyse_var.get(), experience_var.get(), type_process='ANALYSE', drop_option=drop_option_analyse.get(), options=options))
     analys_button.pack(padx=10, pady=10)
 
     ####### ONGLET TRAIN ########
@@ -225,9 +225,14 @@ def create_window(window) -> tk:
     tk.Radiobutton(experience_train, text="Imagine opening and closing both Fists or both Feets", variable=experience_train_var, value=3).pack(anchor="w")
     tk.Radiobutton(experience_train, text="Movement (Real or Imagine) of fists", variable=experience_train_var, value=4).pack(anchor="w")
     tk.Radiobutton(experience_train, text="Movement (Real or Imagine) of Fists or Feets", variable=experience_train_var, value=5).pack(anchor="w")
-   
+    
+    # Checkbox for Drop bad channels option
+    drop_option_predict =  tk.BooleanVar(value=True)
+    drop_checkbutton_predict = tk.Checkbutton(onglet_training, text="Drop Bad Channels", variable=drop_option_predict)
+    drop_checkbutton_predict.pack(padx=10, pady=10)
+
     #button train
-    train_button = tk.Button(onglet_training, text="Train", command=lambda:launch_process(patient_train_var.get(), experience_train_var.get(), type_process='TRAIN', drop_option=drop_option.get()))
+    train_button = tk.Button(onglet_training, text="Train", command=lambda:launch_process(patient_train_var.get(), experience_train_var.get(), type_process='TRAIN', drop_option=drop_option_predict.get()))
     train_button.pack(padx=10, pady=10)
 
     ###### ONGLET PREDICT #######
@@ -242,7 +247,7 @@ def create_window(window) -> tk:
     patient_predict_combo.set("Select patient")
     patient_predict_combo.pack(padx=10, pady=10)
 
-    predict_trained_frame = tk.LabelFrame(onglet_predict, text="Trained Experiences")
+    predict_trained_frame = tk.LabelFrame(onglet_predict, text="Select trained model ")
     predict_trained_frame.pack(padx=2, pady=2)
     window.trained_choice = Predict_choice(window, predict_trained_frame)
 
@@ -253,12 +258,12 @@ def create_window(window) -> tk:
 
 
     #button predict
-    window.predict_button = tk.Button(onglet_predict, text="Predict", state="disabled", command=lambda:launch_predict(patient=patient_predict_var.get(), models=window.trained_choice.get_exp(), experiences=window.predict_choice.get_exp(), drop_option=drop_option.get()))
+    window.predict_button = tk.Button(onglet_predict, text="Predict", state="disabled", command=lambda:launch_predict(patient=patient_predict_var.get(), models=window.trained_choice.get_exp(), experiences=window.predict_choice.get_exp()))
     window.predict_button.pack(padx=10, pady=10)
 
     #Interactiv
     patient_analyse_combo.bind("<<ComboboxSelected>>", lambda event:change_button_analyse(analys_button, patient_analyse_var.get()))
-    patient_predict_combo.bind("<<ComboboxSelected>>", lambda event:change_button_predict(window.predict_button, patient_predict_var.get(), window))
+    patient_predict_combo.bind("<<ComboboxSelected>>", lambda event:change_button_predict(patient_predict_var.get(), window))
     onglets.pack()
 
     return window

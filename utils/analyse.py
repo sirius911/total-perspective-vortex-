@@ -8,9 +8,8 @@ def analyse(subject:int, n_experience:int, drop_option, options):
     print("Process started with parameters : subject=", subject, ", experience=", n_experience)
     subject = int((subject))
     n_experience = int(n_experience)
-    runs = experiments[n_experience]['runs']
     name=get_name_model(subject=subject, n_experience=n_experience)
-    raw, events = get_raw(subject = subject, n_experience=n_experience, runs=runs, drop_option=drop_option)
+    raw, events = get_raw(subject = subject, n_experience=n_experience, drop_option=drop_option)
 
     # draw the first data
     title = f"Patient #{subject} - {experiments[n_experience]['description'].title()} - BEFORE TRAITEMENT"
@@ -29,14 +28,14 @@ def analyse(subject:int, n_experience:int, drop_option, options):
         raw.compute_psd(picks='all').plot()
 
     if options.ica.get():
-        channels = raw.info["ch_names"]
+        # channels = raw.info["ch_names"]
 
-        #ICA
-        ica = mne.preprocessing.ICA(n_components=len(channels) - 2, random_state=0)
         raw_copy = raw.copy().filter(8,30)
-
+        raw_copy = drop_bad_channels(raw=raw_copy, name=name, save=False, verbose=False)
         # The following electrodes have overlapping positions, which causes problems during visualization:
         raw_copy.drop_channels(['T9', 'T10'], on_missing='ignore')
+        #ICA
+        ica = mne.preprocessing.ICA(n_components=len(raw_copy.info['ch_names']), random_state=0)
         ica.fit(raw_copy)
         ica.plot_components(outlines='head', inst=raw_copy, show_names=False)
 
