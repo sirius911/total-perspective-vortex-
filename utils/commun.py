@@ -2,6 +2,9 @@ import os
 
 SAVE_PATH = (os.path.dirname(os.path.abspath('main.py'))+"/save")
 PATH_DATA = os.getenv('HOME') + '/sgoinfre'
+MODELS_PATH_DIR = SAVE_PATH+"/models/"
+BAD_CHANNELS_DIR = SAVE_PATH+"/bad_channels/"
+
 
 class colors:
     green = '\033[92m' # vert

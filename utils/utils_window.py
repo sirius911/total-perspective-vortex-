@@ -65,69 +65,37 @@ class Predict_choice:
             return the number of experience
         """
         return self.val.get()
-    
-    def set_color(self, row_index:int, color=str):
-        self.box[row_index].configure(fg=color)
-        self.box[row_index].configure(bg="lightgrey")
-        # self.box[row_index].configure(selectcolor='yellow')
-        self.box[row_index].configure(highlightcolor='green')
-        # self.box[row_index].configure(activebackground='yellow')
 
     def has_select(self):
         return self.val != 0
-        # for i in range(6):
-        #     if self.val[i].get() != "0":
-        #         return True
-        # return False
 
 def change_button_analyse(analys_button, patient):
     if patient == 'All':
         analys_button['state'] = tk.DISABLED
     else:
         analys_button['state'] = tk.NORMAL
-
-# def change_radiobutton_predict(n_experience, combo, predict_button):
-#     new_values =  get_predict(n_experience)
-#     # print(new_values)
-#     combo['values'] =new_values
-#     if len(new_values) == 0:
-#         combo.set('No models')
-#         combo['state'] = tk.DISABLED
-#     else:
-#         combo.set('Select Patient')
-#         combo['state'] = tk.NORMAL
-#     predict_button['state'] = tk.DISABLED
     
 
 def change_button_predict(patient, window):
-    # predict_choice, trained_choice = window.predict_choice, window.trained_choice
+
     trained_choice = window.trained_choice
-    # if patient is not None or patient != '':
-    #     predict_button['state'] = tk.NORMAL
-    # else:
-    #     predict_button['state'] = tk.DISABLED
-    what = what_predict(patient)
+
     with_wath = get_list_experience(patient)
-    # print(what)
-    # print(with_wath)
     for exp in range(6):
-        # if exp in what:
-        #     predict_choice.enable(exp)
-        # else:
-        #     predict_choice.disabled(exp)
         if exp in with_wath:
             trained_choice.enable(exp)
         else:
             trained_choice.disabled(exp)
-        # if exp in what and exp in with_wath:
-        #     predict_choice.set_color(exp, 'red')
-        # else:
-        #     predict_choice.set_color(exp, 'blue')
     window.update()    
 
 
 
 def launch_process(patient, experience, type_process, drop_option=True, options=None):
+    """
+        Launch 'type_process' with subject=patient, num of experience = experience and other option
+        options is for analyse options display
+        drop_option specifies if the wrong channels are dropped
+    """
     score = []
     if type_process == 'ANALYSE':
         analyse(patient, experience, drop_option, options=options)
@@ -192,12 +160,10 @@ def create_window(window) -> tk:
     patient_analyse_var = tk.StringVar()
     patient_analyse_var.set("Set Patient")
     patients = list(range(1, 110))
-    # patients = []
-    # patients.append("All")
-    # patients.extend(range(1, 110))
 
     patient_analyse_combo = ttk.Combobox(patient_frame_analyse, textvariable=patient_analyse_var, values=patients, state="readonly")
     patient_analyse_combo.pack(padx=10, pady=10)
+
     # Framework for experience choices
     experience_frame = tk.LabelFrame(onglet_analyse, text="Experience")
     experience_frame.pack(padx=10, pady=10)
@@ -278,14 +244,7 @@ def create_window(window) -> tk:
     predict_trained_frame.pack(padx=2, pady=2)
     window.trained_choice = Predict_choice(window, predict_trained_frame)
 
-    # predict_frame = tk.LabelFrame(onglet_predict, text="Experiences to predict")
-    # predict_frame.pack(padx=2, pady=2)
-
-    # window.predict_choice = Predict_choice(window, predict_frame)
-
-
     #button predict
-    # window.predict_button = tk.Button(onglet_predict, text="Predict", state="disabled", command=lambda:launch_predict(patient=patient_predict_var.get(), n_experience=window.trained_choice.get_exp()))
     window.predict_button = tk.Button(onglet_predict, text="Predict", state="disabled", command=lambda:launch_process(patient=patient_predict_var.get(), experience=window.trained_choice.get_exp(), type_process='PREDICT'))
     
     window.predict_button.pack(padx=10, pady=10)

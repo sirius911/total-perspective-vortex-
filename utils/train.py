@@ -48,7 +48,6 @@ def train(subject:int, n_experience:int, drop_option, verbose=False):
     if verbose:
         print(f"cvs = {cvs}")
         print(f"mean of Cross_Val_Score =  = {colorize(mean_cvs)}")
-   
         # title = "Learning Curves "
         # plot_learning_curve(clf, title, X_train, y_train, n_jobs=-1)
         # plt.show()

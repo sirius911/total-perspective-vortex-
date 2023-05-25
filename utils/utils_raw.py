@@ -8,17 +8,14 @@ from joblib import dump, load
 
 
 
-def get_path_bad_channels() -> str:
-    return (f"{SAVE_PATH}/bad_channels/")
-
 def load_bad_channels(name) -> list:
-    path_bad_channels = f"{get_path_bad_channels()}{name}.json"
+    path_bad_channels = f"{BAD_CHANNELS_DIR}{name}.json"
     with open(path_bad_channels, 'r') as file:
         bad_channels = json.load(file)
     return bad_channels
 
 def save_bad_channels(bad_channels:list, name:str, verbose=False):
-    path_bad_channels = f"{get_path_bad_channels()}{name}.json"
+    path_bad_channels = f"{BAD_CHANNELS_DIR}{name}.json"
     list_to_save = bad_channels
 
     with open(path_bad_channels, 'w') as file:
@@ -75,7 +72,7 @@ def get_raw(subject, n_experience, drop_option):
 
     # Drop bad_channels
     name=get_name_model(subject=subject, n_experience=n_experience)
-    path_bad_channels = f"{get_path_bad_channels()}{name}.json"
+    path_bad_channels = f"{BAD_CHANNELS_DIR}{name}.json"
     if drop_option:
         if os.path.exists(path_bad_channels):
             raw.info['bads'] = load_bad_channels(name)
@@ -92,20 +89,15 @@ def get_data(raw):
     picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=False, eog=False)
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax, proj=True, picks=picks, baseline=None, preload=True, verbose=50)
     labels = epochs.events[:, -1]
-    # print(labels)
     epochs_train = epochs.copy().crop(tmin=1.0, tmax=4.0).get_data()
-    # print(epochs_train.shape)
     return epochs_train, labels
 
 def get_name_model(subject:int, n_experience:int) -> str:
     name = f"E{n_experience}S{subject:03d}"
     return name
 
-def get_path_models() -> str:
-    return (f"{SAVE_PATH}/models/")
-
 def get_path(subject:int, n_experience:int):
-    path = f"{get_path_models()}{get_name_model(subject, n_experience)}.mdl"
+    path = f"{MODELS_PATH_DIR}{get_name_model(subject, n_experience)}.mdl"
     return path
 
 def my_filter(raw, verbose=False):
@@ -125,25 +117,10 @@ def load_model(path_model):
     return None
 
 def exist(subject:int, n_experience:int) -> bool:
+    """
+    return True if the model with subject in the experience n_experience exist 
+    """
     return os.path.exists(get_path(subject= int(subject), n_experience= n_experience))
-
-# def get_predict(n_experience:int):def perso_splitter(raw):
-    """
-    Return the data raw in 80% to train and 20% to test
-    """
-    X, Y = get_data(raw)
-    X_train, X_test, y_train, y_test = train_test_split(X, Y,train_size=0.8, random_state=42)
-    return X_train, X_test, y_train, y_test
-#     """
-#     return a list off subjects who can be predict
-#     """
-#     list_subject=[]
-#     for subject in range(1,110):
-#         if os.path.exist(subject=subject, n_experience=n_experience):
-#             list_subject.append(subject)
-#     if len(list_subject) > 1:
-#         list_subject.insert(0, 'All')
-#     return list_subject
 
 def get_list_experience(subject:int) -> list:
     """
