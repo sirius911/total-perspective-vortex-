@@ -120,7 +120,9 @@ def save_model(clf, path_model:str, verbose=False):
         print(f"Model [{colors.blue}{path_model}{colors.reset}] was saved!")
 
 def load_model(path_model):
-    return load(path_model)
+    if os.path.exists(path_model):
+        return load(path_model)
+    return None
 
 def exist(subject:int, n_experience:int) -> bool:
     return os.path.exists(get_path(subject= int(subject), n_experience= n_experience))

@@ -10,6 +10,7 @@ from mne.decoding import CSP
 
 from .experiments import experiments
 from .utils_raw import *
+from .commun import colorize
 from .graph import plot_learning_curve
 
 
@@ -25,7 +26,7 @@ def train(subject:int, n_experience:int, drop_option, verbose=False):
     
     raw = my_filter(raw, verbose)
     
-    X_train, X_test, y_train, y_test = perso_splitter(raw)
+    X_train, _, y_train, _ = perso_splitter(raw)
     
     # Assemble a classifier #2
     csp = CSP(6)
@@ -46,7 +47,7 @@ def train(subject:int, n_experience:int, drop_option, verbose=False):
 
     if verbose:
         print(f"cvs = {cvs}")
-        print(f"mean of Cross_Val_Score =  = {mean_cvs}")
+        print(f"mean of Cross_Val_Score =  = {colorize(mean_cvs)}")
    
         # title = "Learning Curves "
         # plot_learning_curve(clf, title, X_train, y_train, n_jobs=-1)

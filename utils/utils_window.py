@@ -6,13 +6,13 @@ from tqdm import tqdm
 from .utils_raw import what_predict, get_list_trained_subject, exist, get_list_experience, get_name_model
 from .analyse import analyse
 from .train import train
-from .predict import launch_predict
+from .predict import predict
 from .experiments import experiments
-from .commun import colors
+from .commun import colorize, colors
 
 def click_predict_choice(objet):
     button = objet.window.predict_button
-    if objet.window.predict_choice.has_select() and objet.window.trained_choice.has_select():
+    if objet.window.trained_choice.has_select():
         button['state'] = tk.NORMAL
     else:
         button['state'] = tk.DISABLED
@@ -40,9 +40,9 @@ class Predict_choice:
     def __init__(self,window, parent):
         self.window = window
         self.box = []
-        self.val = [tk.BooleanVar(value=False) for _ in range(6)]
+        self.val = tk.IntVar(value=0)
         for num, exp in enumerate(experiments):
-            self.box.append(tk.Checkbutton(parent, text=exp["description"], variable=self.val[num], state="disabled",  command=lambda:click_predict_choice(self)))
+            self.box.append(tk.Radiobutton(parent, text=exp["description"], variable=self.val, value = num, state="disabled",  command=lambda:click_predict_choice(self)))
         for b in self.box:
             b.pack(anchor="w")
 
@@ -62,13 +62,9 @@ class Predict_choice:
     
     def get_exp(self):
         """
-            return the list of selected predict experience
+            return the number of experience
         """
-        ret = []
-        for i, b in enumerate(self.val):
-            if b.get():
-                ret.append(i)
-        return ret
+        return self.val.get()
     
     def set_color(self, row_index:int, color=str):
         self.box[row_index].configure(fg=color)
@@ -78,10 +74,11 @@ class Predict_choice:
         # self.box[row_index].configure(activebackground='yellow')
 
     def has_select(self):
-        for sel in self.val:
-            if sel.get():
-                return True
-        return False
+        return self.val != 0
+        # for i in range(6):
+        #     if self.val[i].get() != "0":
+        #         return True
+        # return False
 
 def change_button_analyse(analys_button, patient):
     if patient == 'All':
@@ -103,28 +100,29 @@ def change_button_analyse(analys_button, patient):
     
 
 def change_button_predict(patient, window):
-    predict_choice, trained_choice = window.predict_choice, window.trained_choice
+    # predict_choice, trained_choice = window.predict_choice, window.trained_choice
+    trained_choice = window.trained_choice
     # if patient is not None or patient != '':
     #     predict_button['state'] = tk.NORMAL
     # else:
     #     predict_button['state'] = tk.DISABLED
     what = what_predict(patient)
     with_wath = get_list_experience(patient)
-    print(what)
-    print(with_wath)
+    # print(what)
+    # print(with_wath)
     for exp in range(6):
-        if exp in what:
-            predict_choice.enable(exp)
-        else:
-            predict_choice.disabled(exp)
+        # if exp in what:
+        #     predict_choice.enable(exp)
+        # else:
+        #     predict_choice.disabled(exp)
         if exp in with_wath:
             trained_choice.enable(exp)
         else:
             trained_choice.disabled(exp)
-        if exp in what and exp in with_wath:
-            predict_choice.set_color(exp, 'red')
-        else:
-            predict_choice.set_color(exp, 'blue')
+        # if exp in what and exp in with_wath:
+        #     predict_choice.set_color(exp, 'red')
+        # else:
+        #     predict_choice.set_color(exp, 'blue')
     window.update()    
 
 
@@ -139,9 +137,37 @@ def launch_process(patient, experience, type_process, drop_option=True, options=
                 score.append(train(subject, experience, drop_option, verbose=False))
         else:
             score.append(train(int(patient), experience, drop_option, verbose=True))
-        print (f"mean Score = {np.mean(score)}")
-        
+        print (f"mean Score = {colorize(np.mean(score))}")
+    elif type_process == 'PREDICT':
+        if patient == "All":
+            score_global = []
+            for subject in range(1,110):
+                print(f"-----> {colors.green}Subject {int(subject)}{colors.reset}", end='')
+                model =  get_name_model(int(subject), experience)
+                print(f"\t model: [{colors.blue}{model}{colors.reset}] predict exp= '{colors.yellow}{experiments[experience]['description']}{colors.reset}' ", end='')
+                score = predict(subject=subject, n_experience=experience, model=model)
+                if score is not None:
+                    score_global.append(score)
+                    print(f" => score = {colorize(score)}")
+                else:
+                    print(f" => Not Trained")
+            print (f"mean Score Global for [{colors.yellow}{experiments[experience]['description']}{colors.reset}] with {colors.blue}{len(score_global)}{colors.reset} patient(s) = {colorize(np.mean(score_global))}")
+        else:
+            print(f"Exp= '{colors.yellow}{experiments[experience]['description']}{colors.reset}'", end='')
+            model =  get_name_model(int(patient), experience)
+            print(f"\t model: [{colors.blue}{model}{colors.reset}]", end='')
+            score = predict(subject=patient, n_experience=experience, model=model)
+            print(f" => score = {colorize(score)}")
+    print(f"\n\t\tProcess ...{colors.blue}Done{colors.reset}")
+    print("---------------------------------------------------")  
     return
+
+def reload_predict_tab(patient_predict_var, patient_predict_combo):
+    new_patients = get_list_trained_subject()
+    patient_predict_var.set("Select patient")
+    patient_predict_combo["values"] = new_patients
+    if new_patients:
+        patient_predict_combo.set(new_patients[0])
 
 def create_window(window) -> tk:
     window.title("PhysioNet / EEG")
@@ -219,6 +245,7 @@ def create_window(window) -> tk:
     experience_train.pack(padx=10, pady=10)
 
     experience_train_var = tk.IntVar(value=0)
+
     tk.Radiobutton(experience_train, text="Open and close left or right Fist", variable=experience_train_var, value=0).pack(anchor="w")
     tk.Radiobutton(experience_train, text="Imagine opening and closing left or right Fist", variable=experience_train_var, value=1).pack(anchor="w")
     tk.Radiobutton(experience_train, text="Open and close both Fists or both Feets", variable=experience_train_var, value=2).pack(anchor="w")
@@ -251,19 +278,22 @@ def create_window(window) -> tk:
     predict_trained_frame.pack(padx=2, pady=2)
     window.trained_choice = Predict_choice(window, predict_trained_frame)
 
-    predict_frame = tk.LabelFrame(onglet_predict, text="Experiences to predict")
-    predict_frame.pack(padx=2, pady=2)
+    # predict_frame = tk.LabelFrame(onglet_predict, text="Experiences to predict")
+    # predict_frame.pack(padx=2, pady=2)
 
-    window.predict_choice = Predict_choice(window, predict_frame)
+    # window.predict_choice = Predict_choice(window, predict_frame)
 
 
     #button predict
-    window.predict_button = tk.Button(onglet_predict, text="Predict", state="disabled", command=lambda:launch_predict(patient=patient_predict_var.get(), models=window.trained_choice.get_exp(), experiences=window.predict_choice.get_exp()))
+    # window.predict_button = tk.Button(onglet_predict, text="Predict", state="disabled", command=lambda:launch_predict(patient=patient_predict_var.get(), n_experience=window.trained_choice.get_exp()))
+    window.predict_button = tk.Button(onglet_predict, text="Predict", state="disabled", command=lambda:launch_process(patient=patient_predict_var.get(), experience=window.trained_choice.get_exp(), type_process='PREDICT'))
+    
     window.predict_button.pack(padx=10, pady=10)
 
     #Interactiv
     patient_analyse_combo.bind("<<ComboboxSelected>>", lambda event:change_button_analyse(analys_button, patient_analyse_var.get()))
     patient_predict_combo.bind("<<ComboboxSelected>>", lambda event:change_button_predict(patient_predict_var.get(), window))
+    onglets.bind("<<NotebookTabChanged>>",lambda event:reload_predict_tab(patient_predict_var, patient_predict_combo))
     onglets.pack()
 
     return window

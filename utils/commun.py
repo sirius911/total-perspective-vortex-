@@ -1,7 +1,7 @@
 import os
 
 SAVE_PATH = (os.path.dirname(os.path.abspath('main.py'))+"/save")
-PATH_DATA = os.getenv('HOME') + '/goinfre'
+PATH_DATA = os.getenv('HOME') + '/sgoinfre'
 
 class colors:
     green = '\033[92m' # vert
@@ -20,8 +20,8 @@ def valid(test):
     return result
 
 def colorize(percentage: float) -> str:
-    if percentage >= 0.9:
+    if percentage >= 0.60:
         return colors.green + f'{percentage:.2%}' + colors.reset
-    if percentage >= 0.70:
+    if percentage >= 0.40:
         return colors.yellow + f'{percentage:.2%}' + colors.reset
     return colors.red + f'{percentage:.2%}' + colors.reset
