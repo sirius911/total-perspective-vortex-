@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 from .utils_raw import what_predict, get_list_trained_subject, exist, get_list_experience, get_name_model
 from .analyse import analyse
-from .train import train
+from .train import train, train2
 from .predict import predict
 from .experiments import experiments
 from .commun import colorize, colors
@@ -102,9 +102,9 @@ def launch_process(patient, experience, type_process, drop_option=True, options=
     elif type_process == 'TRAIN':
         if patient == "All":
             for subject in tqdm(range(1, 110)):
-                score.append(train(subject, experience, drop_option, verbose=False))
+                score.append(train(subject, experience, drop_option, csp=options, verbose=False))
         else:
-            score.append(train(int(patient), experience, drop_option, verbose=True))
+            score.append(train(int(patient), experience, drop_option, csp=options, verbose=True))
         print (f"mean Score = {colorize(np.mean(score))}")
     elif type_process == 'PREDICT':
         if patient == "All":
@@ -224,8 +224,16 @@ def create_window(window) -> tk:
     drop_checkbutton_predict = tk.Checkbutton(onglet_training, text="Drop Bad Channels", variable=drop_option_predict)
     drop_checkbutton_predict.pack(padx=10, pady=10)
 
+    #CSP
+    csp_var = tk.StringVar()
+    csp_var.set("set CSP")
+    csp = ['mne.CSP', 'ft_CSP']
+    csp_combo = ttk.Combobox(onglet_training, textvariable=csp_var, values = csp, state="readonly")
+    csp_combo.current(csp.index('mne.CSP'))
+    csp_combo.pack(padx=10, pady=10)
+
     #button train
-    train_button = tk.Button(onglet_training, text="Train", command=lambda:launch_process(patient_train_var.get(), experience_train_var.get(), type_process='TRAIN', drop_option=drop_option_predict.get()))
+    train_button = tk.Button(onglet_training, text="Train", command=lambda:launch_process(patient_train_var.get(), experience_train_var.get(), type_process='TRAIN', drop_option=drop_option_predict.get(), options=csp_var.get()))
     train_button.pack(padx=10, pady=10)
 
     ###### ONGLET PREDICT #######

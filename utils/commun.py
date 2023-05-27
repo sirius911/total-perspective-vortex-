@@ -23,6 +23,8 @@ def valid(test):
     return result
 
 def colorize(percentage: float) -> str:
+    if percentage is None:
+        return 'None'
     if percentage >= 0.60:
         return colors.green + f'{percentage:.2%}' + colors.reset
     if percentage >= 0.40:

@@ -78,7 +78,7 @@ def get_raw(subject, n_experience, drop_option):
             raw.info['bads'] = load_bad_channels(name)
         else:
             raw.info['bads'] = BAD_CHANNELS
-    return raw, events
+    return raw, events, event_id
 
 def get_data(raw):
     """
@@ -100,10 +100,10 @@ def get_path(subject:int, n_experience:int):
     path = f"{MODELS_PATH_DIR}{get_name_model(subject, n_experience)}.mdl"
     return path
 
-def my_filter(raw, verbose=False):
+def my_filter(raw):
     # Apply band-pass filter
     raw.notch_filter(60, picks='eeg', method="iir", verbose = 50)
-    raw.filter(5.0, 40.0, fir_design="firwin", skip_by_annotation="edge", verbose=50)
+    raw.filter(7.0, 30.0, fir_design="firwin", skip_by_annotation="edge", verbose=50)
     return raw
 
 def save_model(clf, path_model:str, verbose=False):
@@ -113,7 +113,7 @@ def save_model(clf, path_model:str, verbose=False):
 
 def load_model(path_model):
     if os.path.exists(path_model):
-        return load(path_model)
+            return load(path_model)  
     return None
 
 def exist(subject:int, n_experience:int) -> bool:
