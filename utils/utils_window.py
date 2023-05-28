@@ -2,13 +2,14 @@ import tkinter as tk
 from tkinter import ttk
 import numpy as np
 from tqdm import tqdm
+import os
 
 from .utils_raw import what_predict, get_list_trained_subject, exist, get_list_experience, get_name_model
 from .analyse import analyse
 from .train import train, train2
 from .predict import predict
 from .experiments import experiments
-from .commun import colorize, colors
+from .commun import colorize, colors, ALGO_PATH, ALGO
 
 def click_predict_choice(objet):
     button = objet.window.predict_button
@@ -88,6 +89,22 @@ def change_button_predict(patient, window):
             trained_choice.disabled(exp)
     window.update()    
 
+def load_algo(algo_path = ALGO_PATH) -> list:
+    """
+        return the list of csp algo in the folder algo_path
+    """
+    files_py = []
+
+    # Obtenir la liste des fichiers dans le répertoire_algo
+    files = os.listdir(algo_path)
+    # Parcourir les fichiers et vérifier leur extension
+    for file in files:
+        path = os.path.join(algo_path, file)
+        # Vérifier si le fichier a l'extension .py
+        if file.endswith(".py") and os.path.isfile(path) and not (file.startswith('__')):
+            csp_name = ALGO+"."+os.path.basename(os.path.splitext(file)[0])
+            files_py.append(csp_name)
+    return files_py
 
 
 def launch_process(patient, experience, type_process, drop_option=True, options=None):
@@ -102,9 +119,9 @@ def launch_process(patient, experience, type_process, drop_option=True, options=
     elif type_process == 'TRAIN':
         if patient == "All":
             for subject in tqdm(range(1, 110)):
-                score.append(train(subject, experience, drop_option, csp=options, verbose=False))
+                score.append(train(subject, experience, drop_option, csp_name=options, verbose=False))
         else:
-            score.append(train(int(patient), experience, drop_option, csp=options, verbose=True))
+            score.append(train(int(patient), experience, drop_option, csp_name=options, verbose=True))
         print (f"mean Score = {colorize(np.mean(score))}")
     elif type_process == 'PREDICT':
         if patient == "All":
@@ -227,9 +244,10 @@ def create_window(window) -> tk:
     #CSP
     csp_var = tk.StringVar()
     csp_var.set("set CSP")
-    csp = ['mne.CSP', 'ft_CSP']
+    csp = ['mne.decoding.CSP']
+    csp.extend(load_algo())
     csp_combo = ttk.Combobox(onglet_training, textvariable=csp_var, values = csp, state="readonly")
-    csp_combo.current(csp.index('mne.CSP'))
+    csp_combo.current(csp.index('mne.decoding.CSP'))
     csp_combo.pack(padx=10, pady=10)
 
     #button train

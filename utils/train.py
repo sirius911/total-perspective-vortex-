@@ -6,9 +6,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import ShuffleSplit, cross_val_score
 from sklearn.metrics import accuracy_score
-from mne.decoding import CSP 
-from .csp import CSP as MY_CSP
+
 from mne.preprocessing import ICA
+import importlib
 
 
 from .experiments import experiments
@@ -70,7 +70,7 @@ def train2(subject:int, n_experience:int, drop_option, verbose=False):
     save_model(clf, get_path(subject, n_experience), verbose=verbose)
     return mean_cvs
 
-def train(subject:int, n_experience:int, drop_option, csp = "mne.CSP", verbose=False):
+def train(subject:int, n_experience:int, drop_option, csp_name = "mne.decoding.CSP", verbose=False):
     if verbose:
         print("Process start with parameters : subject=", subject, ", experience=", n_experience)
     n_experience = int(n_experience)
@@ -84,10 +84,13 @@ def train(subject:int, n_experience:int, drop_option, csp = "mne.CSP", verbose=F
     X_train, _, y_train, _ = perso_splitter(raw)
     
     # Assemble a classifier #2
-    if csp== "mne.CSP":
-        csp = CSP(n_components=6, log=True,norm_trace=False)
+    if csp_name != "mne.decoding.CSP":
+        module_name = csp_name
+        csp_module = importlib.import_module(module_name)
+        CSP = csp_module.CSP
     else:
-        csp = MY_CSP(n_components=6)
+        from mne.decoding import CSP
+    csp = CSP(6)
     lda = LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto')
     clf= Pipeline([("CSP", csp), ("LDA", lda)], verbose=False)
     

@@ -1,6 +1,6 @@
 import os
 import tkinter as tk
-from utils.commun import PATH_DATA, SAVE_PATH, MODELS_PATH_DIR, BAD_CHANNELS_DIR, colors
+from utils.commun import *
 from utils.utils_window import create_window
 from utils.menu import welcome
 
@@ -18,7 +18,8 @@ if __name__ == "__main__":
     print(f"Backup  Folder : {colors.blue}{SAVE_PATH}{colors.reset}")
     print(f"\tModels : {colors.blue}{MODELS_PATH_DIR}{colors.reset}")
     print(f"\tBad channels : {colors.blue}{BAD_CHANNELS_DIR}{colors.reset}")
-    print(f"\tPhysionet's Data : {colors.blue}{PATH_DATA}{colors.reset}")    
+    print(f"\tPhysionet's Data : {colors.blue}{PATH_DATA}{colors.reset}")
+    print(f"\tPhysionet's Data : {colors.blue}{ALGO_PATH}{colors.reset}")   
     if not os.path.exists(SAVE_PATH):
         os.makedirs(SAVE_PATH)
     if not os.path.exists(MODELS_PATH_DIR):
