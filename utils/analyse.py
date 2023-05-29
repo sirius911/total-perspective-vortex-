@@ -18,6 +18,7 @@ def analyse(subject:int, n_experience:int, drop_option, options):
 
     #concatenate all the file in one raw
     raw = mne.io.concatenate_raws([mne.io.read_raw_edf(f, preload=True, verbose=50) for f in files_name])
+    
     sfreq = raw.info['sfreq']
     print(f"sfreq = {colors.blue}{sfreq}{colors.reset}")
     mne.datasets.eegbci.standardize(raw=raw)
@@ -53,38 +54,32 @@ def analyse(subject:int, n_experience:int, drop_option, options):
     epochs.apply_baseline((None, 0))
     epochs.equalize_event_counts(event_id)
     epochs.plot(title="Epochs")
-    return
-    if options.events.get():
-        # drawing events
-        event_dict = {value: key for key, value in experiments[n_experience]['mapping'].items()}
-        fig = mne.viz.plot_events(events, sfreq = raw.info['sfreq'], first_samp=raw.first_samp, event_id=event_dict)
-        fig.subplots_adjust(right= 0.8)
 
     if options.spectral.get():
         # Perform spectral analysis on sensor data.
         raw.compute_psd(picks='all').plot(picks="data", exclude="bads")
 
-    if options.ica.get():
-        # channels = raw.info["ch_names"]
+    # if options.ica.get():
+    #     # channels = raw.info["ch_names"]
 
-        raw_copy = my_filter(raw.copy())
-        # raw_copy = drop_bad_channels(raw=raw_copy, name=name, save=False, verbose=False)
-        # The following electrodes have overlapping positions, which causes problems during visualization:
-        # raw_copy.drop_channels(['T9', 'T10'], on_missing='ignore')
-        #ICA
-        ica = mne.preprocessing.ICA(n_components=20, random_state=0)
-        ica.fit(raw_copy)
-        # Identification des ICs liées aux mouvements oculaires
-        # eog_epochs = mne.preprocessing.create_eog_epochs(raw=raw_copy, ch_name=raw_copy.info["ch_names"], picks='eeg')
-        eog_evoked = mne.preprocessing.create_eog_epochs(raw_copy, ch_name=raw.info['ch_names']).average(picks="all")
-        # blinks
-        ica.plot_overlay(raw, exclude=[0], picks="eeg")
-        ica.exclude = []
-        eog_indices, eog_scores = ica.find_bads_eog(raw_copy, ch_name="Fpz")
-        # Affichage des résultats
-        ica.plot_scores(eog_scores, exclude=eog_indices)  # Visualisation des scores des ICs
-        ica.plot_sources(eog_evoked)  # Visualisation des ICs dans les données brutes
-        # Application des modifications aux données
+    #     raw_copy = my_filter(raw.copy())
+    #     # raw_copy = drop_bad_channels(raw=raw_copy, name=name, save=False, verbose=False)
+    #     # The following electrodes have overlapping positions, which causes problems during visualization:
+    #     # raw_copy.drop_channels(['T9', 'T10'], on_missing='ignore')
+    #     #ICA
+    #     ica = mne.preprocessing.ICA(n_components=20, random_state=0)
+    #     ica.fit(raw_copy)
+    #     # Identification des ICs liées aux mouvements oculaires
+    #     # eog_epochs = mne.preprocessing.create_eog_epochs(raw=raw_copy, ch_name=raw_copy.info["ch_names"], picks='eeg')
+    #     eog_evoked = mne.preprocessing.create_eog_epochs(raw_copy, ch_name=raw.info['ch_names']).average(picks="all")
+    #     # blinks
+    #     ica.plot_overlay(raw, exclude=[0], picks="eeg")
+    #     ica.exclude = []
+    #     eog_indices, eog_scores = ica.find_bads_eog(raw_copy, ch_name="Fpz")
+    #     # Affichage des résultats
+    #     ica.plot_scores(eog_scores, exclude=eog_indices)  # Visualisation des scores des ICs
+    #     ica.plot_sources(eog_evoked)  # Visualisation des ICs dans les données brutes
+    #     # Application des modifications aux données
         
     # draw the after traitement data
     title = f"Patient #{subject} - {experiments[n_experience]['description'].title()} - AFTER TRAITEMENT"

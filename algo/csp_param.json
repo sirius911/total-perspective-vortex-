@@ -1,0 +1,17 @@
+{
+    "mne.decoding.CSP":
+    {
+        "n_components":6,
+        "log":true
+    },
+    "algo.csp1":
+    {
+        "n_components":4,
+        "log":true
+    },
+    "algo.csp2":
+    {
+        "n_components":6,
+        "log":true
+    }
+}

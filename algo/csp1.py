@@ -14,11 +14,12 @@ from sklearn.base import TransformerMixin, BaseEstimator
 # http://ava.ac/img/Year1/csp-report.pdf
 
 class CSP(TransformerMixin, BaseEstimator):
-    def __init__(self, n_components=4):
+    def __init__(self, n_components=4, log=None):
         if not isinstance(n_components, int):
             raise ValueError('n_components must be an integer.')
         
         self.n_components =  n_components
+        self.log=log
     
     def _compute_covariance_matrices(self, X, y):
         _, n_channels, _ = X.shape

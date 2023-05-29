@@ -4,12 +4,12 @@ import numpy as np
 from tqdm import tqdm
 import os
 
-from .utils_raw import what_predict, get_list_trained_subject, exist, get_list_experience, get_name_model
+from .utils_raw import get_list_trained_subject, exist, get_list_experience, get_name_model
 from .analyse import analyse
-from .train import train, train2
+from .train import train
 from .predict import predict
 from .experiments import experiments
-from .commun import colorize, colors, ALGO_PATH, ALGO
+from .commun import *
 
 def click_predict_choice(objet):
     button = objet.window.predict_button
@@ -154,8 +154,62 @@ def reload_predict_tab(patient_predict_var, patient_predict_combo):
     if new_patients:
         patient_predict_combo.set(new_patients[0])
 
+def save_changes(root, entry:list):
+    data = {
+    "SAVE_PATH": entry[0].get(),
+    "PATH_DATA": entry[1].get(),
+    "MODELS_PATH_DIR": entry[2].get(),
+    "BAD_CHANNELS_DIR": entry[3].get(),
+    "ALGO_PATH": entry[4].get(),
+    }
+    with open("utils/path.json", 'w') as file:
+        json.dump(data, file, indent=4)
+    SAVE_PATH = get_json_value("SAVE_PATH")
+    PATH_DATA = get_json_value("PATH_DATA")
+    MODELS_PATH_DIR = get_json_value("MODELS_PATH_DIR")
+    BAD_CHANNELS_DIR = get_json_value("BAD_CHANNELS_DIR")
+    ALGO_PATH = get_json_value("ALGO_PATH") 
+    root.destroy()
+
+def open_paths_window(root):
+    labels = []
+    entrys = []
+    paths_window = tk.Toplevel(root)
+    paths_window.title("Folders")
+    paths_window.geometry("500x350")
+    data = get_data_path()
+    for label, entry in data.items():
+        lab = tk.Label(paths_window, text=label)
+        lab.pack()
+        labels.append(lab)
+        ent = tk.Entry(paths_window)
+        ent.insert(0, entry)
+        ent.pack(fill=tk.X, padx=10, pady=5)
+        entrys.append(ent)
+
+    save_button = tk.Button(paths_window, text="Save", command= lambda:save_changes(paths_window, entrys))
+    save_button.pack(padx=10, pady=10)
+
+
+def quit_program(root):
+        root.quit()
+
 def create_window(window) -> tk:
     window.title("PhysioNet / EEG")
+
+    # Crée le menu principal
+    menu_bar = tk.Menu(window)
+    window.config(menu=menu_bar)
+
+    # Crée le menu "File"
+    file_menu = tk.Menu(menu_bar, tearoff=False)
+    menu_bar.add_cascade(label="File", menu=file_menu)
+    file_menu.add_command(label="Quit", command=lambda: quit_program(window))
+
+    # Crée le menu "Paths"
+    paths_menu = tk.Menu(menu_bar, tearoff=False)
+    menu_bar.add_cascade(label="Folders", menu=paths_menu)
+    paths_menu.add_command(label="Open Folders Window", command=lambda: open_paths_window(window))
 
     onglets = ttk.Notebook(window)
 

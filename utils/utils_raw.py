@@ -4,18 +4,16 @@ import json
 from sklearn.model_selection import train_test_split
 from .experiments import experiments, BAD_CHANNELS
 from .commun import *
-from joblib import dump, load
-
 
 
 def load_bad_channels(name) -> list:
-    path_bad_channels = f"{BAD_CHANNELS_DIR}{name}.json"
+    path_bad_channels = (f"{get_json_value('BAD_CHANNELS_DIR')}{name}.json")
     with open(path_bad_channels, 'r') as file:
         bad_channels = json.load(file)
     return bad_channels
 
 def save_bad_channels(bad_channels:list, name:str, verbose=False):
-    path_bad_channels = f"{BAD_CHANNELS_DIR}{name}.json"
+    path_bad_channels = (f"{get_json_value('BAD_CHANNELS_DIR')}{name}.json")
     list_to_save = bad_channels
 
     with open(path_bad_channels, 'w') as file:
@@ -23,17 +21,29 @@ def save_bad_channels(bad_channels:list, name:str, verbose=False):
         if verbose:
             print(f"{colors.green} Saved{colors.reset}")
 
+def del_bad_channels(name:str, verbose=False):
+    path_bad_channels = (f"{get_json_value('BAD_CHANNELS_DIR')}{name}.json")
+    if os.path.exists(path_bad_channels):
+        os.remove(path=path_bad_channels)
+        if verbose:
+            print(f"{colors.yellow}{path_bad_channels}{colors.reset} removed")
+
+
 def drop_bad_channels(raw, name:str, save=False, verbose=False):
     """
         function deleting bad_channels to the raw
         if bad_channels == None it delete a predefined hard list 
     """
     bad_channels = raw.info['bads']
-    raw.drop_channels(bad_channels)
-    if verbose:
-        print(f"{colors.red}Drop {len(bad_channels)} Bad channel(s).{colors.reset} -> ", end='')
-    if save:
-        save_bad_channels(bad_channels,name, verbose)
+    if len(bad_channels) > 0:
+        raw.drop_channels(bad_channels)
+        if verbose:
+            print(f"{colors.red}Drop {len(bad_channels)} Bad channel(s).{colors.reset} -> ", end='')
+        if save:
+            save_bad_channels(bad_channels,name, verbose)
+    else:
+        #No bad channel
+        del_bad_channels(name, verbose)
     return raw
 
 def get_raw(subject, n_experience, drop_option):
@@ -105,16 +115,6 @@ def my_filter(raw):
     raw.notch_filter(60, picks='eeg', method="iir", verbose = 50)
     raw.filter(7.0, 30.0, fir_design="firwin", skip_by_annotation="edge", verbose=50)
     return raw
-
-def save_model(clf, path_model:str, verbose=False):
-    dump(clf, path_model)
-    if verbose:
-        print(f"Model [{colors.blue}{path_model}{colors.reset}] was saved!")
-
-def load_model(path_model):
-    if os.path.exists(path_model):
-            return load(path_model)  
-    return None
 
 def exist(subject:int, n_experience:int) -> bool:
     """
