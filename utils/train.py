@@ -8,11 +8,11 @@ from sklearn.model_selection import cross_val_score
 
 from mne.preprocessing import ICA
 from .utils_models import save_model
-import os
 from .experiments import experiments
 from .utils_raw import *
-from .commun import colorize, get_json_value
+from .commun import colorize
 from .utils_csp import get_csp
+from .utils_models import get_path_model
 # from .graph import plot_learning_curve
 
 
@@ -55,5 +55,5 @@ def train(subject:int, n_experience:int, drop_option, csp_name = "mne.decoding.C
     #Save
     clf.drop_option = drop_option
     clf.csp_name = csp_name
-    save_model(clf, get_path(subject, n_experience), verbose=verbose)
+    save_model(clf, get_path_model(subject, n_experience), verbose=verbose)
     return mean_cvs

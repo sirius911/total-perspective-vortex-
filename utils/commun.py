@@ -22,7 +22,7 @@ def get_data_path(file_path="utils/path.json"):
         data = get_default_path()
     return data
 
-def get_json_value(key, file_path = "utils/path.json"):
+def get_json_value(key, file_path = "utils/path.json") -> str:
     if os.path.exists("utils/path.json"):
         with open(file_path, 'r') as file:
             data = json.load(file)

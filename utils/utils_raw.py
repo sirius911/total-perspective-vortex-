@@ -4,6 +4,7 @@ import json
 from sklearn.model_selection import train_test_split
 from .experiments import experiments, BAD_CHANNELS
 from .commun import *
+from .utils_models import get_name_model, get_path_model
 
 
 def load_bad_channels(name) -> list:
@@ -102,13 +103,6 @@ def get_data(raw):
     epochs_train = epochs.copy().crop(tmin=1.0, tmax=4.0).get_data()
     return epochs_train, labels
 
-def get_name_model(subject:int, n_experience:int) -> str:
-    name = f"E{n_experience}S{subject:03d}"
-    return name
-
-def get_path(subject:int, n_experience:int):
-    path = f"{MODELS_PATH_DIR}{get_name_model(subject, n_experience)}.mdl"
-    return path
 
 def my_filter(raw):
     # Apply band-pass filter
@@ -120,7 +114,7 @@ def exist(subject:int, n_experience:int) -> bool:
     """
     return True if the model with subject in the experience n_experience exist 
     """
-    return os.path.exists(get_path(subject= int(subject), n_experience= n_experience))
+    return os.path.exists(get_path_model(subject= int(subject), n_experience= n_experience))
 
 def get_list_experience(subject:int) -> list:
     """
