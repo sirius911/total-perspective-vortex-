@@ -1,10 +1,14 @@
 import os
-from .experiments import experiments
-from .utils_raw import *
+import mne
 import matplotlib
-matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-from .commun import get_json_value
+matplotlib.use('TkAgg')
+
+from .experiments import experiments
+from .utils_raw import load_bad_channels, my_filter, drop_bad_channels
+from .utils_models import get_name_model
+
+from .commun import get_json_value, colors
 
 def analyse(subject:int, n_experience:int, drop_option, options):
     print("Process started with parameters : subject=", subject, ", experience=", n_experience)
@@ -30,8 +34,7 @@ def analyse(subject:int, n_experience:int, drop_option, options):
     path_bad_channels = f"{get_json_value('BAD_CHANNELS_DIR')}{name}.json"
     if drop_option and os.path.exists(path_bad_channels):
             raw.info['bads'] = load_bad_channels(name)
-            print("ici")
-            print(raw.info['bads'])
+
     # draw the first data
     title = f"Patient #{subject} - {experiments[n_experience]['description'].title()} - BEFORE TRAITEMENT"
     old_raw = raw.copy()
@@ -79,28 +82,6 @@ def analyse(subject:int, n_experience:int, drop_option, options):
     if options.spectral.get():
         # Perform spectral analysis on sensor data.
         raw.compute_psd(picks='all').plot(picks="data", exclude="bads")
-
-    # if options.ica.get():
-    #     # channels = raw.info["ch_names"]
-
-    #     raw_copy = my_filter(raw.copy())
-    #     # raw_copy = drop_bad_channels(raw=raw_copy, name=name, save=False, verbose=False)
-    #     # The following electrodes have overlapping positions, which causes problems during visualization:
-    #     # raw_copy.drop_channels(['T9', 'T10'], on_missing='ignore')
-    #     #ICA
-    #     ica = mne.preprocessing.ICA(n_components=20, random_state=0)
-    #     ica.fit(raw_copy)
-    #     # Identification des ICs liées aux mouvements oculaires
-    #     # eog_epochs = mne.preprocessing.create_eog_epochs(raw=raw_copy, ch_name=raw_copy.info["ch_names"], picks='eeg')
-    #     eog_evoked = mne.preprocessing.create_eog_epochs(raw_copy, ch_name=raw.info['ch_names']).average(picks="all")
-    #     # blinks
-    #     ica.plot_overlay(raw, exclude=[0], picks="eeg")
-    #     ica.exclude = []
-    #     eog_indices, eog_scores = ica.find_bads_eog(raw_copy, ch_name="Fpz")
-    #     # Affichage des résultats
-    #     ica.plot_scores(eog_scores, exclude=eog_indices)  # Visualisation des scores des ICs
-    #     ica.plot_sources(eog_evoked)  # Visualisation des ICs dans les données brutes
-    #     # Application des modifications aux données
         
     # draw the after traitement data
     title = f"Patient #{subject} - {experiments[n_experience]['description'].title()} - AFTER TRAITEMENT"

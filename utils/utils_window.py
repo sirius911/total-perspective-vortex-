@@ -1,11 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
+import json
 
 from .utils_raw import get_list_trained_subject, get_list_experience
 from .utils_csp import load_algo
 from .run import launch_process
 from .experiments import experiments
-from .commun import *
+from .commun import get_data_path
 
 def click_predict_choice(objet):
     button = objet.window.predict_button
@@ -13,7 +14,6 @@ def click_predict_choice(objet):
         button['state'] = tk.NORMAL
     else:
         button['state'] = tk.DISABLED
-
 
 class Option:
     def __init__(self, parent):
@@ -102,11 +102,6 @@ def save_changes(root, entry:list):
     }
     with open("utils/path.json", 'w') as file:
         json.dump(data, file, indent=4)
-    SAVE_PATH = get_json_value("SAVE_PATH")
-    PATH_DATA = get_json_value("PATH_DATA")
-    MODELS_PATH_DIR = get_json_value("MODELS_PATH_DIR")
-    BAD_CHANNELS_DIR = get_json_value("BAD_CHANNELS_DIR")
-    ALGO_PATH = get_json_value("ALGO_PATH") 
     root.destroy()
 
 def open_paths_window(root):

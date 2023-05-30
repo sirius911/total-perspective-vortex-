@@ -6,11 +6,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import cross_val_score
 
-from mne.preprocessing import ICA
 from .utils_models import save_model
 from .experiments import experiments
-from .utils_raw import *
-from .commun import colorize
+from .utils_raw import get_raw, drop_bad_channels, my_filter, perso_splitter
+from .utils_models import get_name_model
+from .commun import colorize, colors
 from .utils_csp import get_csp
 from .utils_models import get_path_model
 # from .graph import plot_learning_curve

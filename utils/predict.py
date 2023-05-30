@@ -1,20 +1,13 @@
 import sys
-import numpy as np
 from sklearn.metrics import accuracy_score
 
-from .experiments import experiments
-from .utils_raw import *
-from .commun import *
-from .utils_models import load_model, get_path_model
+from .utils_raw import get_raw, drop_bad_channels, my_filter, perso_splitter
+from .commun import colors
+from .utils_models import get_name_model
 
 def predict(subject:int, n_experience:int, model=None, verbose = False):
     subject = int((subject))
     n_experience = int(n_experience)
-    
-    # if model is None:
-    #     model = load_model(get_path_model(subject, n_experience))
-    # else:
-    #     model = load_model(f"{MODELS_PATH_DIR}{model}.mdl")
     if model is None:
         return None
     drop_option = model.drop_option
