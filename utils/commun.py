@@ -30,11 +30,11 @@ def get_json_value(key, file_path = "utils/path.json") -> str:
         data = get_default_path()
     return data.get(key)
 
-SAVE_PATH = get_json_value("SAVE_PATH")
-PATH_DATA = get_json_value("PATH_DATA")
-MODELS_PATH_DIR = get_json_value("MODELS_PATH_DIR")
-BAD_CHANNELS_DIR = get_json_value("BAD_CHANNELS_DIR")
-ALGO_PATH = get_json_value("ALGO_PATH")
+# SAVE_PATH = get_json_value("SAVE_PATH")
+# PATH_DATA = get_json_value("PATH_DATA")
+# MODELS_PATH_DIR = get_json_value("MODELS_PATH_DIR")
+# BAD_CHANNELS_DIR = get_json_value("BAD_CHANNELS_DIR")
+# ALGO_PATH = get_json_value("ALGO_PATH")
 
 class colors:
     green = '\033[92m' # vert

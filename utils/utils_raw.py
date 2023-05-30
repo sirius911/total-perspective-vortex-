@@ -2,8 +2,8 @@ import os
 import mne
 import json
 from sklearn.model_selection import train_test_split
-from .experiments import experiments, BAD_CHANNELS
-from .commun import *
+from .experiments import experiments, BAD_CHANNELS  
+from .commun import colors, get_json_value
 from .utils_models import get_name_model, get_path_model
 
 
@@ -61,7 +61,7 @@ def get_raw(subject, n_experience, drop_option):
     runs = experiments[n_experience]['runs']
 
     #load list of file for subject and #experience(runs)
-    files_name = mne.datasets.eegbci.load_data(subject=subject, runs=runs ,path=PATH_DATA, verbose=50)
+    files_name = mne.datasets.eegbci.load_data(subject=subject, runs=runs ,path=get_json_value('PATH_DATA'), verbose=50)
 
     #concatenate all the file in one raw
     raw = mne.io.concatenate_raws([mne.io.read_raw_edf(f, preload=True, verbose=50) for f in files_name])
@@ -83,7 +83,7 @@ def get_raw(subject, n_experience, drop_option):
 
     # Drop bad_channels
     name=get_name_model(subject=subject, n_experience=n_experience)
-    path_bad_channels = f"{BAD_CHANNELS_DIR}{name}.json"
+    path_bad_channels = f"{get_json_value('BAD_CHANNELS_DIR')}{name}.json"
     if drop_option:
         if os.path.exists(path_bad_channels):
             raw.info['bads'] = load_bad_channels(name)
