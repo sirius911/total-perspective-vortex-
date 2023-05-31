@@ -1,7 +1,7 @@
 {
-    "SAVE_PATH": "/mnt/nfs/homes/clorin/42/total-perspective-vortex/save",
-    "PATH_DATA": "/mnt/nfs/homes/clorin/sgoinfre",
-    "MODELS_PATH_DIR": "/mnt/nfs/homes/clorin/42/total-perspective-vortex/save/models/mne/",
-    "BAD_CHANNELS_DIR": "/mnt/nfs/homes/clorin/42/total-perspective-vortex/save/bad_channels/",
-    "ALGO_PATH": "/mnt/nfs/homes/clorin/42/total-perspective-vortex/algo"
+    "SAVE_PATH": "/home/clorin/programmation/42/total-perspective-vortex/save",
+    "PATH_DATA": "/home/clorin/sgoinfre",
+    "MODELS_PATH_DIR": "/home/clorin/programmation/42/total-perspective-vortex/save/models/",
+    "BAD_CHANNELS_DIR": "/home/clorin/programmation/42/total-perspective-vortex/save/bad_channels/",
+    "ALGO_PATH": "/home/clorin/programmation/42/total-perspective-vortex/algo"
 }

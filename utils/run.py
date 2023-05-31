@@ -36,7 +36,11 @@ def launch_process(patient, experience, type_process, drop_option=True, options=
                     csp_name = model.csp_name
                 except AttributeError:
                     csp_name = 'Unknown'
-                print(f"\t model: [{colors.blue}{model_name}{colors.reset}][{colors.blue}{csp_name}{colors.reset}][Drop Bad Ch = {model.drop_option}] - '{colors.yellow}{experiments[experience]['description']}{colors.reset}' ", end='')
+                try:
+                    drop_option = model.drop_option
+                except AttributeError:
+                    drop_option = ''
+                print(f"\t model: [{colors.blue}{model_name}{colors.reset}][{colors.blue}{csp_name}{colors.reset}][Drop Bad Ch = {drop_option}] - '{colors.yellow}{experiments[experience]['description']}{colors.reset}' ", end='')
                 score = predict(subject=subject, n_experience=experience, model=model)
                 if score is not None:
                     score_global.append(score)
@@ -52,7 +56,11 @@ def launch_process(patient, experience, type_process, drop_option=True, options=
                 csp_name = model.csp_name
             except AttributeError:
                 csp_name = 'Unknown'
-            print(f"\t model: [{colors.blue}{model_name}{colors.reset}][{colors.blue}{csp_name}{colors.reset}]", end='')
+            try:
+                drop_option = model.drop_option
+            except AttributeError:
+                drop_option = ''
+            print(f"\t model: [{colors.blue}{model_name}{colors.reset}][{colors.blue}{csp_name}{colors.reset}][Drop Bad Ch = {drop_option}]", end='')
             score = predict(subject=patient, n_experience=experience, model=model)
             print(f" => score = {colorize(score)}")
     print(f"\n\t\tProcess ...{colors.blue}Done{colors.reset}")

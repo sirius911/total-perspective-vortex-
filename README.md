@@ -55,3 +55,5 @@ Les numéros figurant sous le nom de chaque électrode indiquent l'ordre dans le
 Cet ensemble de données a été créé et versé dans la PhysioBank par Gerwin Schalk (schalk at wadsworth dot org) et ses collègues du BCI R&D Program, Wadsworth Center, New York State Department of Health, Albany, NY. W.A. Sarnacki a recueilli les données. Aditya Joshi a compilé l'ensemble des données et préparé la documentation. D.J. McFarland et J.R. Wolpaw étaient respectivement responsables de la conception expérimentale et de la supervision du projet. Ce travail a été soutenu par des subventions du NIH/NIBIB ((EB006356 (GS) et EB00856 (JRW et GS)).
 
 https://github.com/thervieu/42total-perspective-vortex
+
+##Pour la première installation veuillez supprimer le fichier utils/path.json, pour que le main crée les dossiers dans votre systeme
